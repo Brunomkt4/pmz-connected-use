@@ -120,6 +120,8 @@ export const OrderFormDialog = ({ product, isOpen, onClose }: OrderFormDialogPro
                       onChange={(e) => onChange(e.target.files)}
                       {...field}
                       className="cursor-pointer"
+                      accept="*/*"
+                      title="Choose file to attach"
                     />
                   </FormControl>
                   <FormMessage />
