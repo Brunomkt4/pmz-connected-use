@@ -122,6 +122,8 @@ export const OrderFormDialog = ({ product, isOpen, onClose }: OrderFormDialogPro
                       className="cursor-pointer"
                       accept="*/*"
                       title="Choose file to attach"
+                      aria-label="Select file attachment"
+                      placeholder="Choose file..."
                     />
                   </FormControl>
                   <FormMessage />
