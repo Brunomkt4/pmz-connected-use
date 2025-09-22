@@ -38,7 +38,7 @@ export default function SupplierRegistration() {
     {
       id: '1',
       type: 'ai',
-      content: 'Olá! Sou seu assistente inteligente para cadastro de fornecedores. Vou te ajudar a registrar sua empresa de forma rápida e eficiente. Para começar, me conte um pouco sobre sua empresa - nome, produtos que oferece, onde está localizada...',
+      content: 'Hello! I\'m your intelligent assistant for supplier registration. I\'ll help you register your company quickly and efficiently. To get started, tell me a bit about your company - name, products you offer, where it\'s located...',
       timestamp: new Date()
     }
   ]);
@@ -72,12 +72,12 @@ export default function SupplierRegistration() {
 
     // Simple logic - you could expand this with real geographic data
     if (supplier.includes(delivery.split(' ')[0]) || delivery.includes(supplier.split(' ')[0])) {
-      return `${distances.same_city} dias úteis`;
+      return `${distances.same_city} business days`;
     } else if (supplier.includes('sp') && delivery.includes('sp') || 
                supplier.includes('rj') && delivery.includes('rj')) {
-      return `${distances.same_state} dias úteis`;
+      return `${distances.same_state} business days`;
     } else {
-      return `${distances.different_region} dias úteis`;
+      return `${distances.different_region} business days`;
     }
   };
 
@@ -120,8 +120,8 @@ export default function SupplierRegistration() {
     }
 
     // Extract technical datasheet
-    if (message.toLowerCase().includes('datasheet') || message.toLowerCase().includes('ficha técnica')) {
-      extracted.technicalDatasheet = 'Mencionado';
+    if (message.toLowerCase().includes('datasheet') || message.toLowerCase().includes('technical sheet')) {
+      extracted.technicalDatasheet = 'Mentioned';
     }
 
     // Extract product types
@@ -155,61 +155,61 @@ export default function SupplierRegistration() {
     const missingFields = [];
     
     if (!currentData.companyName && !userData.companyName) {
-      missingFields.push('nome da empresa');
+      missingFields.push('company name');
     }
     if (!currentData.cnpj && !userData.cnpj) {
       missingFields.push('CNPJ');
     }
     if (!currentData.address && !userData.address) {
-      missingFields.push('endereço');
+      missingFields.push('address');
     }
     if (!currentData.phone) {
-      missingFields.push('telefone');
+      missingFields.push('phone');
     }
     if (!currentData.email) {
       missingFields.push('email');
     }
     if (!currentData.certifications || currentData.certifications.length === 0) {
-      missingFields.push('certificações (SIF, ISO, etc.)');
+      missingFields.push('certifications (SIF, ISO, etc.)');
     }
     if (!currentData.capacity) {
-      missingFields.push('capacidade de produção');
+      missingFields.push('production capacity');
     }
     if (!currentData.technicalDatasheet) {
-      missingFields.push('ficha técnica dos produtos');
+      missingFields.push('technical datasheet of products');
     }
     if (!currentData.productTypes || currentData.productTypes.length === 0) {
-      missingFields.push('tipos de produtos');
+      missingFields.push('product types');
     }
     if (!currentData.minimumOrderQuantity) {
-      missingFields.push('quantidade mínima de pedido');
+      missingFields.push('minimum order quantity');
     }
     if (!currentData.deliveryLocation) {
-      missingFields.push('local de entrega para calcular prazo');
+      missingFields.push('delivery location to calculate timeframe');
     }
 
     // If we extracted new data
     if (Object.keys(userData).length > 0) {
-      let response = "Perfeito! Consegui identificar ";
+      let response = "Perfect! I was able to identify ";
       const extractedItems = [];
       
-      if (userData.companyName) extractedItems.push(`nome da empresa: ${userData.companyName}`);
+      if (userData.companyName) extractedItems.push(`company name: ${userData.companyName}`);
       if (userData.cnpj) extractedItems.push(`CNPJ: ${userData.cnpj}`);
-      if (userData.products) extractedItems.push(`produtos: ${userData.products.join(', ')}`);
-      if (userData.address) extractedItems.push(`localização: ${userData.address}`);
+      if (userData.products) extractedItems.push(`products: ${userData.products.join(', ')}`);
+      if (userData.address) extractedItems.push(`location: ${userData.address}`);
       
       response += extractedItems.join(', ') + ". ";
       
       if (missingFields.length > 0) {
-        response += `\n\nPara completar seu cadastro, preciso de mais algumas informações: ${missingFields.slice(0, 2).join(' e ')}. `;
+        response += `\n\nTo complete your registration, I need some more information: ${missingFields.slice(0, 2).join(' and ')}. `;
         
-        if (missingFields.includes('certificações (SIF, ISO, etc.)')) {
-          response += "Vocês possuem certificações como SIF, ISO 22000 ou outras? ";
-        } else if (missingFields.includes('capacidade de produção')) {
-          response += "Qual é a capacidade mensal de produção de vocês? ";
+        if (missingFields.includes('certifications (SIF, ISO, etc.)')) {
+          response += "Do you have certifications like SIF, ISO 22000 or others? ";
+        } else if (missingFields.includes('production capacity')) {
+          response += "What is your monthly production capacity? ";
         }
       } else {
-        response += "\n\n🎉 Cadastro quase completo! Só preciso confirmar alguns detalhes finais.";
+        response += "\n\n🎉 Registration almost complete! I just need to confirm some final details.";
       }
       
       return response;
@@ -217,10 +217,10 @@ export default function SupplierRegistration() {
 
     // No new data extracted
     if (missingFields.length > 0) {
-      return `Entendi! Vou precisar de mais algumas informações para completar o cadastro. Pode me informar o ${missingFields[0]}?`;
+      return `Understood! I'll need some more information to complete the registration. Can you provide me with ${missingFields[0]}?`;
     }
 
-    return "Excelente! Todas as informações principais foram coletadas. Vou processar seu cadastro.";
+    return "Excellent! All main information has been collected. I'll process your registration.";
   };
 
   const sendMessage = async () => {
@@ -297,7 +297,7 @@ export default function SupplierRegistration() {
           </Button>
           <div className="flex items-center gap-2">
             <Building2 className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground">Cadastro Inteligente de Fornecedores</h1>
+            <h1 className="text-2xl font-bold text-foreground">Intelligent Supplier Registration</h1>
           </div>
         </div>
 
@@ -307,12 +307,12 @@ export default function SupplierRegistration() {
             <Card className="p-6 bg-gradient-card border-0 shadow-soft">
               <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 text-primary" />
-                Progresso do Cadastro
+                Registration Progress
               </h3>
               
               <div className="mb-4">
                 <div className="flex justify-between text-sm mb-2">
-                  <span>Completude</span>
+                  <span>Completeness</span>
                   <span className="font-semibold">{supplierData.completeness}%</span>
                 </div>
                 <div className="w-full bg-secondary rounded-full h-2">
@@ -326,7 +326,7 @@ export default function SupplierRegistration() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${supplierData.companyName ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Nome da Empresa</span>
+                  <span className="text-sm">Company Name</span>
                   {supplierData.companyName && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
                 
@@ -338,54 +338,54 @@ export default function SupplierRegistration() {
                 
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${supplierData.products?.length ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Produtos</span>
+                  <span className="text-sm">Products</span>
                   {supplierData.products?.length && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${supplierData.address ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Localização</span>
+                  <span className="text-sm">Location</span>
                   {supplierData.address && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${supplierData.technicalDatasheet ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Ficha Técnica</span>
+                  <span className="text-sm">Technical Datasheet</span>
                   {supplierData.technicalDatasheet && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${supplierData.productTypes?.length ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Tipos de Produtos</span>
+                  <span className="text-sm">Product Types</span>
                   {supplierData.productTypes?.length && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${supplierData.minimumOrderQuantity ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Qtd. Mínima</span>
+                  <span className="text-sm">Min. Quantity</span>
                   {supplierData.minimumOrderQuantity && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${supplierData.deliveryTime ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Prazo de Entrega</span>
+                  <span className="text-sm">Delivery Time</span>
                   {supplierData.deliveryTime && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
               </div>
 
               {supplierData.companyName && (
                 <div className="mt-6 pt-4 border-t border-border">
-                  <h4 className="font-medium mb-2">Dados Coletados:</h4>
+                  <h4 className="font-medium mb-2">Collected Data:</h4>
                   <div className="space-y-2 text-sm">
-                    <div><strong>Empresa:</strong> {supplierData.companyName}</div>
+                    <div><strong>Company:</strong> {supplierData.companyName}</div>
                     {supplierData.cnpj && <div><strong>CNPJ:</strong> {supplierData.cnpj}</div>}
-                    {supplierData.address && <div><strong>Local:</strong> {supplierData.address}</div>}
-                    {supplierData.technicalDatasheet && <div><strong>Ficha Técnica:</strong> {supplierData.technicalDatasheet}</div>}
-                    {supplierData.minimumOrderQuantity && <div><strong>Qtd. Mínima:</strong> {supplierData.minimumOrderQuantity}</div>}
-                    {supplierData.deliveryTime && <div><strong>Prazo de Entrega:</strong> {supplierData.deliveryTime}</div>}
+                    {supplierData.address && <div><strong>Location:</strong> {supplierData.address}</div>}
+                    {supplierData.technicalDatasheet && <div><strong>Technical Datasheet:</strong> {supplierData.technicalDatasheet}</div>}
+                    {supplierData.minimumOrderQuantity && <div><strong>Min. Quantity:</strong> {supplierData.minimumOrderQuantity}</div>}
+                    {supplierData.deliveryTime && <div><strong>Delivery Time:</strong> {supplierData.deliveryTime}</div>}
                     {supplierData.products?.length && (
                       <div>
-                        <strong>Produtos:</strong>
+                        <strong>Products:</strong>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {supplierData.products.map((product, idx) => (
                             <Badge key={idx} variant="secondary" className="text-xs">
@@ -397,7 +397,7 @@ export default function SupplierRegistration() {
                     )}
                     {supplierData.productTypes?.length && (
                       <div>
-                        <strong>Tipos de Produtos:</strong>
+                        <strong>Product Types:</strong>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {supplierData.productTypes.map((type, idx) => (
                             <Badge key={idx} variant="outline" className="text-xs">
@@ -426,22 +426,28 @@ export default function SupplierRegistration() {
                     <div className={`max-w-[80%] ${message.type === 'user' ? 'order-2' : 'order-1'}`}>
                       {message.type === 'ai' && (
                         <div className="flex items-center gap-2 mb-2">
-                          <div className="w-8 h-8 rounded-full bg-gradient-ai flex items-center justify-center">
+                          <div className="w-8 h-8 bg-gradient-ai rounded-full flex items-center justify-center">
                             <Bot className="h-4 w-4 text-white" />
                           </div>
-                          <span className="text-sm font-medium text-primary">Assistente IA</span>
+                          <span className="text-sm text-muted-foreground font-medium">AI Assistant</span>
                         </div>
                       )}
+                      
                       <div
-                        className={`p-4 rounded-2xl ${
+                        className={`rounded-2xl p-4 ${
                           message.type === 'user'
-                            ? 'bg-primary text-primary-foreground ml-4'
-                            : 'bg-secondary text-secondary-foreground'
+                            ? 'bg-gradient-button text-white ml-12'
+                            : 'bg-background border border-border text-foreground shadow-soft'
                         }`}
                       >
-                        <p className="whitespace-pre-wrap">{message.content}</p>
-                        <div className="text-xs opacity-70 mt-2">
-                          {message.timestamp.toLocaleTimeString()}
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                          {message.content}
+                        </p>
+                        <div className="flex items-center gap-2 mt-2 opacity-70">
+                          <Clock className="h-3 w-3" />
+                          <span className="text-xs">
+                            {message.timestamp.toLocaleTimeString()}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -452,17 +458,19 @@ export default function SupplierRegistration() {
                   <div className="flex justify-start">
                     <div className="max-w-[80%]">
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="w-8 h-8 rounded-full bg-gradient-ai flex items-center justify-center ai-glow">
+                        <div className="w-8 h-8 bg-gradient-ai rounded-full flex items-center justify-center">
                           <Bot className="h-4 w-4 text-white" />
                         </div>
-                        <span className="text-sm font-medium text-primary">Assistente IA</span>
-                        <Clock className="h-4 w-4 text-muted-foreground animate-spin" />
+                        <span className="text-sm text-muted-foreground font-medium">AI Assistant</span>
                       </div>
-                      <div className="p-4 rounded-2xl bg-secondary text-secondary-foreground">
-                        <div className="flex gap-1">
-                          <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
-                          <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-150" />
-                          <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-300" />
+                      <div className="bg-background border border-border rounded-2xl p-4 shadow-soft">
+                        <div className="flex items-center space-x-2">
+                          <div className="flex space-x-1">
+                            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" />
+                            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                          </div>
+                          <span className="text-sm text-muted-foreground">Processing...</span>
                         </div>
                       </div>
                     </div>
@@ -472,14 +480,14 @@ export default function SupplierRegistration() {
               </div>
 
               {/* Input Area */}
-              <div className="p-6 border-t border-border">
-                <div className="flex gap-2">
+              <div className="border-t border-border p-4">
+                <div className="flex gap-3">
                   <Input
                     value={currentMessage}
                     onChange={(e) => setCurrentMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="Digite as informações da sua empresa..."
-                    className="flex-1"
+                    placeholder="Enter your company information..."
+                    className="flex-1 bg-background border-border focus:border-primary"
                     disabled={isTyping}
                   />
                   <Button 
