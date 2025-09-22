@@ -18,7 +18,7 @@ const menuItems = [
   { id: "favorites", label: "Favorites", url: "/favorites", icon: Heart },
   { id: "messages", label: "Messages", url: "/messages", icon: MessageSquare },
   { id: "transactions", label: "Transaction Intel", url: "/transaction-intelligence", icon: TrendingUp },
-  { id: "supplier", label: "Cadastro Fornecedor", url: "/supplier-registration", icon: Building2 },
+  { id: "supplier", label: "Supplier Registration", url: "/supplier-registration", icon: Building2 },
   { id: "buyer", label: "Buyer Registration", url: "/buyer-registration", icon: ShoppingCart },
   { id: "transport", label: "Transport Registration", url: "/transport-registration", icon: Ship },
   { id: "guarantee", label: "Bank Guarantee", url: "/bank-guarantee-registration", icon: Shield },
