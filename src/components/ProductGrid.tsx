@@ -3,6 +3,8 @@ import { Eye, Flame } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ProductDetailsDialog } from "@/components/ProductDetailsDialog";
+import { OrderFormDialog } from "@/components/OrderFormDialog";
 
 export interface Product {
   id: string;
@@ -203,8 +205,28 @@ const products: Product[] = [
 ];
 
 export const ProductGrid = () => {
-  const handleContactSeller = (product: Product) => {
-    window.location.href = `mailto:${product.sellerEmail}?subject=Inquiry about ${product.name}`;
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [showProductDetails, setShowProductDetails] = useState(false);
+  const [showOrderForm, setShowOrderForm] = useState(false);
+
+  const handleProductClick = (product: Product) => {
+    setSelectedProduct(product);
+    setShowProductDetails(true);
+  };
+
+  const handleSendOrder = () => {
+    setShowProductDetails(false);
+    setShowOrderForm(true);
+  };
+
+  const handleCloseProductDetails = () => {
+    setShowProductDetails(false);
+    setSelectedProduct(null);
+  };
+
+  const handleCloseOrderForm = () => {
+    setShowOrderForm(false);
+    setSelectedProduct(null);
   };
 
   // Asset color mapping based on FilterTags colors
@@ -235,7 +257,11 @@ export const ProductGrid = () => {
     <div>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 xl:grid-cols-9 gap-3">
         {sortedProducts.map((product) => (
-          <Card key={product.id} className="group cursor-pointer bg-gradient-card border-0 shadow-soft hover:shadow-medium card-hover rounded-md overflow-hidden smooth-transition">
+          <Card 
+            key={product.id} 
+            className="group cursor-pointer bg-gradient-card border-0 shadow-soft hover:shadow-medium card-hover rounded-md overflow-hidden smooth-transition"
+            onClick={() => handleProductClick(product)}
+          >
             <CardContent className="p-0 relative">
               {/* Asset Badges */}
               {product.assets && product.assets.length > 0 && (
@@ -298,14 +324,17 @@ export const ProductGrid = () => {
                   <span className="text-muted-foreground font-inter">{product.interestedCount}</span>
                 </div>
                 
-                {/* Contact Button */}
+                {/* View Details Button */}
                 <Button
                   variant="default"
                   size="sm" 
                   className="w-full h-6 text-xs font-medium bg-gradient-button hover:shadow-glow smooth-transition rounded font-inter"
-                  onClick={() => handleContactSeller(product)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleProductClick(product);
+                  }}
                 >
-                  Contact
+                  View Details
                 </Button>
               </div>
             </CardContent>
@@ -325,6 +354,21 @@ export const ProductGrid = () => {
           </div>
         </div>
       )}
+
+      {/* Product Details Dialog */}
+      <ProductDetailsDialog
+        product={selectedProduct}
+        isOpen={showProductDetails}
+        onClose={handleCloseProductDetails}
+        onSendOrder={handleSendOrder}
+      />
+
+      {/* Order Form Dialog */}
+      <OrderFormDialog
+        product={selectedProduct}
+        isOpen={showOrderForm}
+        onClose={handleCloseOrderForm}
+      />
     </div>
   );
 };
