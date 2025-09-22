@@ -24,6 +24,11 @@ interface SupplierData {
   certifications?: string[];
   capacity?: string;
   experience?: string;
+  technicalDatasheet?: string;
+  productTypes?: string[];
+  minimumOrderQuantity?: string;
+  deliveryTime?: string;
+  deliveryLocation?: string;
   completeness: number;
 }
 
@@ -49,6 +54,32 @@ export default function SupplierRegistration() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const calculateDeliveryTime = (supplierLocation: string, deliveryLocation: string): string => {
+    // Basic distance calculation logic - in a real app, you'd use a proper geolocation API
+    const distances: { [key: string]: number } = {
+      'same_city': 1,
+      'same_state': 3,
+      'same_region': 7,
+      'different_region': 14,
+      'international': 21
+    };
+
+    if (!supplierLocation || !deliveryLocation) return '';
+
+    const supplier = supplierLocation.toLowerCase();
+    const delivery = deliveryLocation.toLowerCase();
+
+    // Simple logic - you could expand this with real geographic data
+    if (supplier.includes(delivery.split(' ')[0]) || delivery.includes(supplier.split(' ')[0])) {
+      return `${distances.same_city} dias úteis`;
+    } else if (supplier.includes('sp') && delivery.includes('sp') || 
+               supplier.includes('rj') && delivery.includes('rj')) {
+      return `${distances.same_state} dias úteis`;
+    } else {
+      return `${distances.different_region} dias úteis`;
+    }
+  };
 
   const analyzeMessage = (message: string): Partial<SupplierData> => {
     const extracted: Partial<SupplierData> = {};
@@ -88,6 +119,35 @@ export default function SupplierRegistration() {
       extracted.address = locationMatch[1]?.trim();
     }
 
+    // Extract technical datasheet
+    if (message.toLowerCase().includes('datasheet') || message.toLowerCase().includes('ficha técnica')) {
+      extracted.technicalDatasheet = 'Mencionado';
+    }
+
+    // Extract product types
+    const productTypeKeywords = ['tipo de produto', 'categorias', 'cortes', 'processados', 'frescos', 'congelados'];
+    const foundProductTypes = productTypeKeywords.filter(keyword => 
+      message.toLowerCase().includes(keyword)
+    );
+    if (foundProductTypes.length > 0) {
+      extracted.productTypes = foundProductTypes;
+    }
+
+    // Extract minimum order quantity
+    const quantityMatch = message.match(/(?:quantidade mínima|pedido mínimo|lote mínimo)[\s:]*(\d+[^\s]*)/i);
+    if (quantityMatch) {
+      extracted.minimumOrderQuantity = quantityMatch[1];
+    }
+
+    // Extract delivery location for time calculation
+    const deliveryMatch = message.match(/(?:entrega|delivery|entregar)[\s\w]*(?:em|para|até)\s+([^.,\n]+)/i);
+    if (deliveryMatch) {
+      extracted.deliveryLocation = deliveryMatch[1]?.trim();
+      if (extracted.deliveryLocation && supplierData.address) {
+        extracted.deliveryTime = calculateDeliveryTime(supplierData.address, extracted.deliveryLocation);
+      }
+    }
+
     return extracted;
   };
 
@@ -114,6 +174,18 @@ export default function SupplierRegistration() {
     }
     if (!currentData.capacity) {
       missingFields.push('capacidade de produção');
+    }
+    if (!currentData.technicalDatasheet) {
+      missingFields.push('ficha técnica dos produtos');
+    }
+    if (!currentData.productTypes || currentData.productTypes.length === 0) {
+      missingFields.push('tipos de produtos');
+    }
+    if (!currentData.minimumOrderQuantity) {
+      missingFields.push('quantidade mínima de pedido');
+    }
+    if (!currentData.deliveryLocation) {
+      missingFields.push('local de entrega para calcular prazo');
     }
 
     // If we extracted new data
@@ -171,7 +243,7 @@ export default function SupplierRegistration() {
       const newSupplierData = { ...supplierData, ...extractedData };
       
       // Calculate completeness
-      const totalFields = 7; // companyName, cnpj, address, phone, email, certifications, capacity
+      const totalFields = 11; // companyName, cnpj, address, phone, email, certifications, capacity, technicalDatasheet, productTypes, minimumOrderQuantity, deliveryLocation
       let filledFields = 0;
       if (newSupplierData.companyName) filledFields++;
       if (newSupplierData.cnpj) filledFields++;
@@ -180,6 +252,10 @@ export default function SupplierRegistration() {
       if (newSupplierData.email) filledFields++;
       if (newSupplierData.certifications?.length) filledFields++;
       if (newSupplierData.capacity) filledFields++;
+      if (newSupplierData.technicalDatasheet) filledFields++;
+      if (newSupplierData.productTypes?.length) filledFields++;
+      if (newSupplierData.minimumOrderQuantity) filledFields++;
+      if (newSupplierData.deliveryLocation) filledFields++;
       
       newSupplierData.completeness = Math.round((filledFields / totalFields) * 100);
       
@@ -271,6 +347,30 @@ export default function SupplierRegistration() {
                   <span className="text-sm">Localização</span>
                   {supplierData.address && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${supplierData.technicalDatasheet ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Ficha Técnica</span>
+                  {supplierData.technicalDatasheet && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${supplierData.productTypes?.length ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Tipos de Produtos</span>
+                  {supplierData.productTypes?.length && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${supplierData.minimumOrderQuantity ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Qtd. Mínima</span>
+                  {supplierData.minimumOrderQuantity && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${supplierData.deliveryTime ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Prazo de Entrega</span>
+                  {supplierData.deliveryTime && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
               </div>
 
               {supplierData.companyName && (
@@ -280,6 +380,9 @@ export default function SupplierRegistration() {
                     <div><strong>Empresa:</strong> {supplierData.companyName}</div>
                     {supplierData.cnpj && <div><strong>CNPJ:</strong> {supplierData.cnpj}</div>}
                     {supplierData.address && <div><strong>Local:</strong> {supplierData.address}</div>}
+                    {supplierData.technicalDatasheet && <div><strong>Ficha Técnica:</strong> {supplierData.technicalDatasheet}</div>}
+                    {supplierData.minimumOrderQuantity && <div><strong>Qtd. Mínima:</strong> {supplierData.minimumOrderQuantity}</div>}
+                    {supplierData.deliveryTime && <div><strong>Prazo de Entrega:</strong> {supplierData.deliveryTime}</div>}
                     {supplierData.products?.length && (
                       <div>
                         <strong>Produtos:</strong>
@@ -287,6 +390,18 @@ export default function SupplierRegistration() {
                           {supplierData.products.map((product, idx) => (
                             <Badge key={idx} variant="secondary" className="text-xs">
                               {product}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {supplierData.productTypes?.length && (
+                      <div>
+                        <strong>Tipos de Produtos:</strong>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {supplierData.productTypes.map((type, idx) => (
+                            <Badge key={idx} variant="outline" className="text-xs">
+                              {type}
                             </Badge>
                           ))}
                         </div>
