@@ -8,7 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AppSidebar } from "@/components/AppSidebar";
 import Footer from "@/components/Footer";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import IndexTest from "./pages/IndexTest";
+import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import SearchResults from "./pages/SearchResults";
 import TransactionIntelligence from "./pages/TransactionIntelligence";
@@ -42,7 +42,7 @@ const App = () => (
               <main className="flex-1 overflow-hidden flex flex-col">
                 <div className="flex-1 overflow-auto">
                   <Routes>
-                    <Route path="/" element={<IndexTest />} />
+                    <Route path="/" element={<Index />} />
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/search" element={<ProtectedRoute><SearchResults /></ProtectedRoute>} />
                     <Route path="/transaction-intelligence" element={<ProtectedRoute><TransactionIntelligence /></ProtectedRoute>} />
