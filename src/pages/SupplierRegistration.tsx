@@ -38,7 +38,7 @@ export default function SupplierRegistration() {
     {
       id: '1',
       type: 'ai',
-      content: 'Olá! Sou seu assistente inteligente para cadastro de fornecedores. Vou te ajudar a registrar sua empresa de forma rápida e eficiente. Para começar, me conte um pouco sobre sua empresa - nome, produtos que oferece, onde está localizada...',
+      content: 'Hello! I am your intelligent assistant for supplier registration. I will help you register your company quickly and efficiently. To get started, tell me a bit about your company - name, products you offer, where it is located...',
       timestamp: new Date()
     }
   ]);
@@ -72,12 +72,12 @@ export default function SupplierRegistration() {
 
     // Simple logic - you could expand this with real geographic data
     if (supplier.includes(delivery.split(' ')[0]) || delivery.includes(supplier.split(' ')[0])) {
-      return `${distances.same_city} dias úteis`;
+      return `${distances.same_city} business days`;
     } else if (supplier.includes('sp') && delivery.includes('sp') || 
                supplier.includes('rj') && delivery.includes('rj')) {
-      return `${distances.same_state} dias úteis`;
+      return `${distances.same_state} business days`;
     } else {
-      return `${distances.different_region} dias úteis`;
+      return `${distances.different_region} business days`;
     }
   };
 
@@ -86,8 +86,8 @@ export default function SupplierRegistration() {
     
     // Extract company name (basic pattern)
     const companyPatterns = [
-      /(?:empresa|companhia|corporação|ltda|sa|eireli|mei)\s+([^.,\n]+)/i,
-      /^([A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÇ][a-záéíóúâêîôûàèìòùç\s&]+)(?:\s+ltda|sa|eireli|mei)?/i
+      /(?:company|corporation|ltd|llc|inc|corp)\s+([^.,\n]+)/i,
+      /^([A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÇA-Z][a-záéíóúâêîôûàèìòùça-z\s&]+)(?:\s+ltd|llc|inc|corp)?/i
     ];
     
     for (const pattern of companyPatterns) {
@@ -105,7 +105,7 @@ export default function SupplierRegistration() {
     }
 
     // Extract products
-    const productKeywords = ['carne', 'frango', 'porco', 'beef', 'chicken', 'pork', 'proteína', 'açougue', 'frigorífico'];
+    const productKeywords = ['meat', 'chicken', 'pork', 'beef', 'poultry', 'protein', 'butcher', 'slaughterhouse'];
     const foundProducts = productKeywords.filter(keyword => 
       message.toLowerCase().includes(keyword)
     );
@@ -114,18 +114,18 @@ export default function SupplierRegistration() {
     }
 
     // Extract location
-    const locationMatch = message.match(/(?:em|de|localizada|situada)\s+([^.,\n]+)/i);
+    const locationMatch = message.match(/(?:in|at|located|situated)\s+([^.,\n]+)/i);
     if (locationMatch) {
       extracted.address = locationMatch[1]?.trim();
     }
 
     // Extract technical datasheet
-    if (message.toLowerCase().includes('datasheet') || message.toLowerCase().includes('ficha técnica')) {
-      extracted.technicalDatasheet = 'Mencionado';
+    if (message.toLowerCase().includes('datasheet') || message.toLowerCase().includes('technical sheet')) {
+      extracted.technicalDatasheet = 'Mentioned';
     }
 
     // Extract product types
-    const productTypeKeywords = ['tipo de produto', 'categorias', 'cortes', 'processados', 'frescos', 'congelados'];
+    const productTypeKeywords = ['product type', 'categories', 'cuts', 'processed', 'fresh', 'frozen'];
     const foundProductTypes = productTypeKeywords.filter(keyword => 
       message.toLowerCase().includes(keyword)
     );
@@ -134,13 +134,13 @@ export default function SupplierRegistration() {
     }
 
     // Extract minimum order quantity
-    const quantityMatch = message.match(/(?:quantidade mínima|pedido mínimo|lote mínimo)[\s:]*(\d+[^\s]*)/i);
+    const quantityMatch = message.match(/(?:minimum quantity|minimum order|minimum batch)[\s:]*(\d+[^\s]*)/i);
     if (quantityMatch) {
       extracted.minimumOrderQuantity = quantityMatch[1];
     }
 
     // Extract delivery location for time calculation
-    const deliveryMatch = message.match(/(?:entrega|delivery|entregar)[\s\w]*(?:em|para|até)\s+([^.,\n]+)/i);
+    const deliveryMatch = message.match(/(?:delivery|deliver|ship)[\s\w]*(?:to|in|at)\s+([^.,\n]+)/i);
     if (deliveryMatch) {
       extracted.deliveryLocation = deliveryMatch[1]?.trim();
       if (extracted.deliveryLocation && supplierData.address) {
@@ -155,61 +155,61 @@ export default function SupplierRegistration() {
     const missingFields = [];
     
     if (!currentData.companyName && !userData.companyName) {
-      missingFields.push('nome da empresa');
+      missingFields.push('company name');
     }
     if (!currentData.cnpj && !userData.cnpj) {
-      missingFields.push('CNPJ');
+      missingFields.push('registration number');
     }
     if (!currentData.address && !userData.address) {
-      missingFields.push('endereço');
+      missingFields.push('address');
     }
     if (!currentData.phone) {
-      missingFields.push('telefone');
+      missingFields.push('phone');
     }
     if (!currentData.email) {
       missingFields.push('email');
     }
     if (!currentData.certifications || currentData.certifications.length === 0) {
-      missingFields.push('certificações (SIF, ISO, etc.)');
+      missingFields.push('certifications (FDA, ISO, etc.)');
     }
     if (!currentData.capacity) {
-      missingFields.push('capacidade de produção');
+      missingFields.push('production capacity');
     }
     if (!currentData.technicalDatasheet) {
-      missingFields.push('ficha técnica dos produtos');
+      missingFields.push('product technical datasheet');
     }
     if (!currentData.productTypes || currentData.productTypes.length === 0) {
-      missingFields.push('tipos de produtos');
+      missingFields.push('product types');
     }
     if (!currentData.minimumOrderQuantity) {
-      missingFields.push('quantidade mínima de pedido');
+      missingFields.push('minimum order quantity');
     }
     if (!currentData.deliveryLocation) {
-      missingFields.push('local de entrega para calcular prazo');
+      missingFields.push('delivery location to calculate timeframe');
     }
 
     // If we extracted new data
     if (Object.keys(userData).length > 0) {
-      let response = "Perfeito! Consegui identificar ";
+      let response = "Perfect! I was able to identify ";
       const extractedItems = [];
       
-      if (userData.companyName) extractedItems.push(`nome da empresa: ${userData.companyName}`);
-      if (userData.cnpj) extractedItems.push(`CNPJ: ${userData.cnpj}`);
-      if (userData.products) extractedItems.push(`produtos: ${userData.products.join(', ')}`);
-      if (userData.address) extractedItems.push(`localização: ${userData.address}`);
+      if (userData.companyName) extractedItems.push(`company name: ${userData.companyName}`);
+      if (userData.cnpj) extractedItems.push(`registration: ${userData.cnpj}`);
+      if (userData.products) extractedItems.push(`products: ${userData.products.join(', ')}`);
+      if (userData.address) extractedItems.push(`location: ${userData.address}`);
       
       response += extractedItems.join(', ') + ". ";
       
       if (missingFields.length > 0) {
-        response += `\n\nPara completar seu cadastro, preciso de mais algumas informações: ${missingFields.slice(0, 2).join(' e ')}. `;
+        response += `\n\nTo complete your registration, I need some additional information: ${missingFields.slice(0, 2).join(' and ')}. `;
         
-        if (missingFields.includes('certificações (SIF, ISO, etc.)')) {
-          response += "Vocês possuem certificações como SIF, ISO 22000 ou outras? ";
-        } else if (missingFields.includes('capacidade de produção')) {
-          response += "Qual é a capacidade mensal de produção de vocês? ";
+        if (missingFields.includes('certifications (FDA, ISO, etc.)')) {
+          response += "Do you have certifications such as FDA, ISO 22000 or others? ";
+        } else if (missingFields.includes('production capacity')) {
+          response += "What is your monthly production capacity? ";
         }
       } else {
-        response += "\n\n🎉 Cadastro quase completo! Só preciso confirmar alguns detalhes finais.";
+        response += "\n\n🎉 Registration almost complete! I just need to confirm a few final details.";
       }
       
       return response;
@@ -217,10 +217,10 @@ export default function SupplierRegistration() {
 
     // No new data extracted
     if (missingFields.length > 0) {
-      return `Entendi! Vou precisar de mais algumas informações para completar o cadastro. Pode me informar o ${missingFields[0]}?`;
+      return `I understand! I'll need some additional information to complete the registration. Could you provide the ${missingFields[0]}?`;
     }
 
-    return "Excelente! Todas as informações principais foram coletadas. Vou processar seu cadastro.";
+    return "Excellent! All main information has been collected. I will process your registration.";
   };
 
   const sendMessage = async () => {
@@ -297,7 +297,7 @@ export default function SupplierRegistration() {
           </Button>
           <div className="flex items-center gap-2">
             <Building2 className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground">Cadastro Inteligente de Fornecedores</h1>
+            <h1 className="text-2xl font-bold text-foreground">Intelligent Supplier Registration</h1>
           </div>
         </div>
 
@@ -307,12 +307,12 @@ export default function SupplierRegistration() {
             <Card className="p-6 bg-gradient-card border-0 shadow-soft">
               <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 text-primary" />
-                Progresso do Cadastro
+                Registration Progress
               </h3>
               
               <div className="mb-4">
                 <div className="flex justify-between text-sm mb-2">
-                  <span>Completude</span>
+                  <span>Completeness</span>
                   <span className="font-semibold">{supplierData.completeness}%</span>
                 </div>
                 <div className="w-full bg-secondary rounded-full h-2">
@@ -326,7 +326,7 @@ export default function SupplierRegistration() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${supplierData.companyName ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Nome da Empresa</span>
+                  <span className="text-sm">Company Name</span>
                   {supplierData.companyName && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
                 
@@ -338,54 +338,54 @@ export default function SupplierRegistration() {
                 
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${supplierData.products?.length ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Produtos</span>
+                  <span className="text-sm">Products</span>
                   {supplierData.products?.length && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${supplierData.address ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Localização</span>
+                  <span className="text-sm">Location</span>
                   {supplierData.address && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${supplierData.technicalDatasheet ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Ficha Técnica</span>
+                  <span className="text-sm">Technical Datasheet</span>
                   {supplierData.technicalDatasheet && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${supplierData.productTypes?.length ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Tipos de Produtos</span>
+                  <span className="text-sm">Product Types</span>
                   {supplierData.productTypes?.length && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${supplierData.minimumOrderQuantity ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Qtd. Mínima</span>
+                  <span className="text-sm">Min. Quantity</span>
                   {supplierData.minimumOrderQuantity && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${supplierData.deliveryTime ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Prazo de Entrega</span>
+                  <span className="text-sm">Delivery Time</span>
                   {supplierData.deliveryTime && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
               </div>
 
               {supplierData.companyName && (
                 <div className="mt-6 pt-4 border-t border-border">
-                  <h4 className="font-medium mb-2">Dados Coletados:</h4>
+                  <h4 className="font-medium mb-2">Collected Data:</h4>
                   <div className="space-y-2 text-sm">
-                    <div><strong>Empresa:</strong> {supplierData.companyName}</div>
-                    {supplierData.cnpj && <div><strong>CNPJ:</strong> {supplierData.cnpj}</div>}
-                    {supplierData.address && <div><strong>Local:</strong> {supplierData.address}</div>}
-                    {supplierData.technicalDatasheet && <div><strong>Ficha Técnica:</strong> {supplierData.technicalDatasheet}</div>}
-                    {supplierData.minimumOrderQuantity && <div><strong>Qtd. Mínima:</strong> {supplierData.minimumOrderQuantity}</div>}
-                    {supplierData.deliveryTime && <div><strong>Prazo de Entrega:</strong> {supplierData.deliveryTime}</div>}
+                    <div><strong>Company:</strong> {supplierData.companyName}</div>
+                    {supplierData.cnpj && <div><strong>Registration:</strong> {supplierData.cnpj}</div>}
+                    {supplierData.address && <div><strong>Location:</strong> {supplierData.address}</div>}
+                    {supplierData.technicalDatasheet && <div><strong>Technical Datasheet:</strong> {supplierData.technicalDatasheet}</div>}
+                    {supplierData.minimumOrderQuantity && <div><strong>Min. Quantity:</strong> {supplierData.minimumOrderQuantity}</div>}
+                    {supplierData.deliveryTime && <div><strong>Delivery Time:</strong> {supplierData.deliveryTime}</div>}
                     {supplierData.products?.length && (
                       <div>
-                        <strong>Produtos:</strong>
+                        <strong>Products:</strong>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {supplierData.products.map((product, idx) => (
                             <Badge key={idx} variant="secondary" className="text-xs">
@@ -397,7 +397,7 @@ export default function SupplierRegistration() {
                     )}
                     {supplierData.productTypes?.length && (
                       <div>
-                        <strong>Tipos de Produtos:</strong>
+                        <strong>Product Types:</strong>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {supplierData.productTypes.map((type, idx) => (
                             <Badge key={idx} variant="outline" className="text-xs">
@@ -429,7 +429,7 @@ export default function SupplierRegistration() {
                           <div className="w-8 h-8 rounded-full bg-gradient-ai flex items-center justify-center">
                             <Bot className="h-4 w-4 text-white" />
                           </div>
-                          <span className="text-sm font-medium text-primary">Assistente IA</span>
+                          <span className="text-sm font-medium text-primary">AI Assistant</span>
                         </div>
                       )}
                       <div
@@ -455,7 +455,7 @@ export default function SupplierRegistration() {
                         <div className="w-8 h-8 rounded-full bg-gradient-ai flex items-center justify-center ai-glow">
                           <Bot className="h-4 w-4 text-white" />
                         </div>
-                        <span className="text-sm font-medium text-primary">Assistente IA</span>
+                        <span className="text-sm font-medium text-primary">AI Assistant</span>
                         <Clock className="h-4 w-4 text-muted-foreground animate-spin" />
                       </div>
                       <div className="p-4 rounded-2xl bg-secondary text-secondary-foreground">
@@ -478,7 +478,7 @@ export default function SupplierRegistration() {
                     value={currentMessage}
                     onChange={(e) => setCurrentMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="Digite as informações da sua empresa..."
+                    placeholder="Enter your company information..."
                     className="flex-1"
                     disabled={isTyping}
                   />
