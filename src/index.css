@@ -1,0 +1,180 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Brand Colors Applied with Soft Gradients */
+    --background: 210 25% 98%;
+    --foreground: 220 15% 20%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 15% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 15% 20%;
+
+    /* Navy blue primary from brand */
+    --primary: 209 64% 24%;
+    --primary-foreground: 0 0% 98%;
+
+    /* Soft rose secondary */
+    --secondary: 12 48% 91%;
+    --secondary-foreground: 220 15% 20%;
+
+    --muted: 210 15% 96%;
+    --muted-foreground: 220 10% 55%;
+
+    /* Orange accent from brand */
+    --accent: 17 84% 59%;
+    --accent-foreground: 0 0% 98%;
+
+    /* Red for important actions */
+    --destructive: 0 80% 55%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 210 15% 88%;
+    --input: 210 20% 94%;
+    --ring: 220 100% 25%;
+
+    --radius: 1rem;
+
+    /* Your Brand Colors - Adapted for UI */
+    --brand-navy: 209 64% 24%;        /* Dark navy blue */
+    --brand-red: 0 64% 52%;            /* Red */
+    --brand-orange: 17 84% 59%;        /* Orange */
+    --brand-rose: 12 48% 81%;          /* Rose/pink */
+    --brand-blue: 210 65% 46%;         /* Blue */
+    --brand-burgundy: 345 60% 35%;     /* Dark red/burgundy */
+    --brand-gray: 210 65% 46%;         /* Gray */
+    --brand-light: 210 25% 98%;        /* Light background */
+
+    /* Pastel Gradients using your brand colors */
+    --gradient-hero: linear-gradient(135deg, hsl(210 30% 95%), hsl(15 30% 95%), hsl(220 20% 95%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(210 25% 98%));
+    --gradient-ai: linear-gradient(135deg, hsl(220 100% 25%), hsl(210 80% 50%));
+    --gradient-button: linear-gradient(135deg, hsl(220 100% 25%), hsl(210 80% 50%));
+    --gradient-accent: linear-gradient(135deg, hsl(25 85% 60%), hsl(0 80% 55%));
+
+    /* Soft Shadows using brand colors */
+    --shadow-soft: 0 4px 20px hsl(220 100% 25% / 0.08);
+    --shadow-medium: 0 8px 30px hsl(220 100% 25% / 0.12);
+    --shadow-glow: 0 0 20px hsl(220 100% 25% / 0.25);
+
+    /* Category Colors - Pastel versions of your brand colors */
+    --category-beef: 0 40% 88%;         /* Soft red pastel */
+    --category-chicken: 25 45% 88%;     /* Soft orange pastel */
+    --category-pork: 15 35% 88%;        /* Soft rose pastel */
+    --category-others: 210 35% 88%;     /* Soft blue pastel */
+
+    /* AI Search Bar - using soft brand colors */
+    --search-bg: 210 30% 98%;
+    --search-border: 220 30% 80%;
+    --search-glow: 220 100% 25% / 0.3;
+
+    /* Glow Effects */
+    --glow-primary: 220 100% 25%;
+    --glow-secondary: 210 80% 50%;
+    --glow-accent: 25 85% 60%;
+
+    /* Sidebar */
+    --sidebar-background: 210 25% 98%;
+    --sidebar-foreground: 220 15% 20%;
+    --sidebar-primary: 220 100% 25%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 210 15% 96%;
+    --sidebar-accent-foreground: 220 15% 20%;
+    --sidebar-border: 210 15% 88%;
+    --sidebar-ring: 220 100% 25%;
+  }
+
+  .dark {
+    --background: 220 15% 8%;
+    --foreground: 210 20% 95%;
+
+    --card: 220 15% 10%;
+    --card-foreground: 210 20% 95%;
+
+    --popover: 220 15% 10%;
+    --popover-foreground: 210 20% 95%;
+
+    --primary: 210 80% 60%;
+    --primary-foreground: 220 15% 8%;
+
+    --secondary: 220 15% 15%;
+    --secondary-foreground: 210 20% 95%;
+
+    --muted: 220 15% 12%;
+    --muted-foreground: 210 10% 65%;
+
+    --accent: 25 85% 65%;
+    --accent-foreground: 220 15% 8%;
+
+    --destructive: 0 80% 60%;
+    --destructive-foreground: 210 20% 95%;
+
+    --border: 220 15% 20%;
+    --input: 220 15% 15%;
+    --ring: 210 80% 60%;
+
+    --gradient-hero: linear-gradient(135deg, hsl(220 15% 12%), hsl(220 30% 15%));
+    --gradient-card: linear-gradient(145deg, hsl(220 15% 10%), hsl(220 15% 12%));
+    
+    --sidebar-background: 220 15% 8%;
+    --sidebar-foreground: 210 20% 95%;
+    --sidebar-primary: 210 80% 60%;
+    --sidebar-primary-foreground: 220 15% 8%;
+    --sidebar-accent: 220 15% 12%;
+    --sidebar-accent-foreground: 210 20% 95%;
+    --sidebar-border: 220 15% 20%;
+    --sidebar-ring: 210 80% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+
+  /* AI Glow Animation */
+  @keyframes glow {
+    0%, 100% { box-shadow: 0 0 20px hsl(var(--glow-primary) / 0.2); }
+    50% { box-shadow: 0 0 30px hsl(var(--glow-primary) / 0.4); }
+  }
+
+  .ai-glow {
+    animation: glow 3s ease-in-out infinite;
+  }
+
+  /* Smooth Transitions */
+  .smooth-transition {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Hover Scale Effect */
+  .hover-scale {
+    transition: transform 0.2s ease;
+  }
+  
+  .hover-scale:hover {
+    transform: scale(1.02);
+  }
+
+  /* Card Hover Effects */
+  .card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-medium);
+  }
+}
