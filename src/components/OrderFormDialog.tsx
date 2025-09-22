@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { Product } from "@/components/ProductGrid";
 
 const orderFormSchema = z.object({
@@ -31,6 +32,7 @@ interface OrderFormDialogProps {
 
 export const OrderFormDialog = ({ product, isOpen, onClose }: OrderFormDialogProps) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<OrderFormValues>({
@@ -46,6 +48,15 @@ export const OrderFormDialog = ({ product, isOpen, onClose }: OrderFormDialogPro
   });
 
   const onSubmit = async (values: OrderFormValues) => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to place an order.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       // Simulate form submission
@@ -53,6 +64,8 @@ export const OrderFormDialog = ({ product, isOpen, onClose }: OrderFormDialogPro
       
       console.log("Order submitted:", {
         product: product?.name,
+        userId: user.id,
+        userEmail: user.email,
         ...values,
         fileName: values.file[0]?.name,
       });
@@ -85,6 +98,24 @@ export const OrderFormDialog = ({ product, isOpen, onClose }: OrderFormDialogPro
             Send Order - {product.name}
           </DialogTitle>
         </DialogHeader>
+
+        {!user && (
+          <div className="bg-muted/50 border border-muted-foreground/20 rounded-lg p-4 mb-6">
+            <p className="text-sm text-muted-foreground text-center">
+              You must be signed in to place an order.{' '}
+              <Button 
+                variant="link" 
+                className="p-0 h-auto text-primary underline"
+                onClick={() => {
+                  onClose();
+                  window.location.href = '/auth';
+                }}
+              >
+                Sign in here
+              </Button>
+            </p>
+          </div>
+        )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -224,9 +255,9 @@ export const OrderFormDialog = ({ product, isOpen, onClose }: OrderFormDialogPro
               <Button
                 type="submit"
                 className="flex-1 bg-gradient-button hover:shadow-glow smooth-transition"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !user}
               >
-                {isSubmitting ? "Sending..." : "Send Order"}
+                {isSubmitting ? "Sending..." : !user ? "Sign In Required" : "Send Order"}
               </Button>
             </div>
           </form>
