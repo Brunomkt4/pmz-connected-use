@@ -26,7 +26,8 @@ const queryClient = new QueryClient();
 const HistoryPage = () => <div className="p-8"><h1 className="text-2xl font-bold">History</h1><p>Your search and order history will appear here.</p></div>;
 const FavoritesPage = () => <div className="p-8"><h1 className="text-2xl font-bold">Favorites</h1><p>Your favorite products will appear here.</p></div>;
 const MessagesPage = () => <div className="p-8"><h1 className="text-2xl font-bold">Messages</h1><p>Your conversations with suppliers will appear here.</p></div>;
-const SettingsPage = () => <div className="p-8"><h1 className="text-2xl font-bold">Settings</h1><p>Application settings and preferences.</p></div>;
+// Import Settings page
+import Settings from "@/pages/Settings";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -54,7 +55,7 @@ const App = () => (
                     <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
                     <Route path="/favorites" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
                     <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
-                    <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+                    <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>

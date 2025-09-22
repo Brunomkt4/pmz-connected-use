@@ -19,10 +19,14 @@ export type Database = {
           company_name: string | null
           country: string | null
           created_at: string
+          date_format: string | null
           email: string | null
           full_name: string | null
           id: string
+          language: string | null
+          notifications_enabled: boolean | null
           phone: string | null
+          timezone: string | null
           updated_at: string
           user_id: string
         }
@@ -30,10 +34,14 @@ export type Database = {
           company_name?: string | null
           country?: string | null
           created_at?: string
+          date_format?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
+          language?: string | null
+          notifications_enabled?: boolean | null
           phone?: string | null
+          timezone?: string | null
           updated_at?: string
           user_id: string
         }
@@ -41,10 +49,14 @@ export type Database = {
           company_name?: string | null
           country?: string | null
           created_at?: string
+          date_format?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
+          language?: string | null
+          notifications_enabled?: boolean | null
           phone?: string | null
+          timezone?: string | null
           updated_at?: string
           user_id?: string
         }
