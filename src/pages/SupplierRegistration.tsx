@@ -5,6 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface Message {
   id: string;
@@ -18,6 +21,8 @@ interface SupplierData {
   companyName?: string;
   cnpj?: string;
   address?: string;
+  phone?: string;
+  email?: string;
   products?: string[];
   certifications?: string[];
   capacity?: string;
@@ -43,6 +48,7 @@ interface SupplierData {
 
 export default function SupplierRegistration() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -54,6 +60,7 @@ export default function SupplierRegistration() {
   const [currentMessage, setCurrentMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [supplierData, setSupplierData] = useState<SupplierData>({ completeness: 0 });
+  const [isRegistrationComplete, setIsRegistrationComplete] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -63,6 +70,76 @@ export default function SupplierRegistration() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const saveSupplierData = async (data: SupplierData) => {
+    if (!user) {
+      toast.error('You must be logged in to save supplier data');
+      return;
+    }
+
+    try {
+      // First, check if user has a company
+      const { data: companies, error: companiesError } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (companiesError) throw companiesError;
+
+      const companyData = {
+        name: data.companyName || '',
+        cnpj: data.cnpj,
+        address: data.address,
+        phone: data.phone,
+        email: data.email,
+        products: data.products,
+        certifications: data.certifications,
+        capacity: data.capacity,
+        technical_datasheet: data.technicalDatasheet,
+        product_types: data.productTypes,
+        minimum_order_quantity: data.minimumOrderQuantity,
+        delivery_time: data.deliveryTime,
+        delivery_location: data.deliveryLocation,
+        sif_registration: data.sifRegistration,
+        contact_person: data.contactPerson,
+        available_certifications: data.availableCertifications,
+        available_quantity: data.availableQuantity,
+        price_per_unit: data.pricePerUnit,
+        incoterm: data.incoterm,
+        payment_method: data.paymentMethod,
+        shipping_details: data.shippingDetails,
+        packaging: data.packaging,
+        offer_validity: data.offerValidity,
+        additional_comments: data.additionalComments,
+        account_type_id: 1, // Supplier account type
+        user_id: user.id
+      };
+
+      if (companies) {
+        // Update existing company
+        const { error: updateError } = await supabase
+          .from('companies')
+          .update(companyData)
+          .eq('id', companies.id);
+
+        if (updateError) throw updateError;
+      } else {
+        // Create new company
+        const { error: insertError } = await supabase
+          .from('companies')
+          .insert([companyData]);
+
+        if (insertError) throw insertError;
+      }
+
+      setIsRegistrationComplete(true);
+      toast.success('Supplier registration completed successfully!');
+    } catch (error) {
+      console.error('Error saving supplier data:', error);
+      toast.error('Failed to save supplier data. Please try again.');
+    }
+  };
 
   const calculateDeliveryTime = (supplierLocation: string, deliveryLocation: string): string => {
     // Basic distance calculation logic - in a real app, you'd use a proper geolocation API
@@ -256,6 +333,12 @@ export default function SupplierRegistration() {
     if (!currentData.offerValidity && !userData.offerValidity) {
       missingFields.push('offer validity period');
     }
+    if (!currentData.phone) {
+      missingFields.push('phone number');
+    }
+    if (!currentData.email) {
+      missingFields.push('email address');
+    }
 
     // If we extracted new data
     if (Object.keys(userData).length > 0) {
@@ -318,15 +401,17 @@ export default function SupplierRegistration() {
     setIsTyping(true);
 
     // Simulate AI processing
-    setTimeout(() => {
+    setTimeout(async () => {
       const extractedData = analyzeMessage(currentMessage);
       const newSupplierData = { ...supplierData, ...extractedData };
       
       // Calculate completeness
-      const totalFields = 19; // All required fields including new ones
+      const totalFields = 21; // All required fields including new ones
       let filledFields = 0;
       if (newSupplierData.cnpj) filledFields++;
       if (newSupplierData.address) filledFields++;
+      if (newSupplierData.phone) filledFields++;
+      if (newSupplierData.email) filledFields++;
       if (newSupplierData.certifications?.length) filledFields++;
       if (newSupplierData.capacity) filledFields++;
       if (newSupplierData.technicalDatasheet) filledFields++;
@@ -348,6 +433,11 @@ export default function SupplierRegistration() {
       newSupplierData.completeness = Math.round((filledFields / totalFields) * 100);
       
       setSupplierData(newSupplierData);
+
+      // Check if registration is complete and save to database
+      if (newSupplierData.completeness === 100 && !isRegistrationComplete) {
+        await saveSupplierData(newSupplierData);
+      }
 
       const aiResponse = generateAIResponse(extractedData, supplierData);
       

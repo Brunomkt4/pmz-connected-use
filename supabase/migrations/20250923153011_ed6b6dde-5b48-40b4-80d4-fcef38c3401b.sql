@@ -1,0 +1,24 @@
+-- Add supplier registration fields to companies table
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS cnpj TEXT;
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS address TEXT;
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS products TEXT[];
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS certifications TEXT[];
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS capacity TEXT;
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS technical_datasheet TEXT;
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS product_types TEXT[];
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS minimum_order_quantity TEXT;
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS delivery_time TEXT;
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS delivery_location TEXT;
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS sif_registration TEXT;
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS contact_person TEXT;
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS available_certifications TEXT[];
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS available_quantity TEXT;
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS price_per_unit TEXT;
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS incoterm TEXT;
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS payment_method TEXT;
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS shipping_details TEXT;
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS packaging TEXT;
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS offer_validity TEXT;
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS additional_comments TEXT;
