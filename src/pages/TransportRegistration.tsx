@@ -5,6 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface Message {
   id: string;
@@ -16,28 +19,43 @@ interface Message {
 interface TransportData {
   companyName?: string;
   licenseNumber?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
   vehicleTypes?: string[];
   capacity?: string;
   serviceAreas?: string[];
   certifications?: string[];
   insurance?: string;
   temperatureControl?: boolean;
+  modeOfTransport?: string[];
+  originDestinations?: string[];
+  estimatedTransitTime?: string;
+  shipmentSchedule?: string;
+  containerDetails?: string;
+  freightCost?: string;
+  includedServices?: string[];
+  documentsCompliance?: string[];
+  trackingSupportDetails?: string;
+  specialRequirements?: string;
   completeness: number;
 }
 
 export default function TransportRegistration() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       type: 'ai',
-      content: 'Welcome! I\'m your specialized assistant for transport company registration. I\'ll help you register your logistics services efficiently. Please tell me about your transport company - name, types of vehicles, service coverage areas, and any special capabilities like refrigerated transport...',
+      content: 'Welcome! I\'m your specialized assistant for transport company registration. I\'ll help you register your comprehensive logistics profile efficiently. Please tell me about your transport company - name, types of vehicles, service coverage areas, rates, schedules, and any special services...',
       timestamp: new Date()
     }
   ]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [transportData, setTransportData] = useState<TransportData>({ completeness: 0 });
+  const [isRegistrationComplete, setIsRegistrationComplete] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -47,6 +65,73 @@ export default function TransportRegistration() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const saveCarrierData = async (data: TransportData) => {
+    if (!user) {
+      toast.error('You must be logged in to save carrier data');
+      return;
+    }
+
+    try {
+      // Save basic company information to companies table
+      const companyData = {
+        name: data.companyName || '',
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        account_type_id: 7, // Transport/Carrier account type
+        user_id: user.id
+      };
+
+      const { error: companyError } = await supabase
+        .from('companies')
+        .upsert(companyData, {
+          onConflict: 'user_id'
+        });
+
+      if (companyError) throw companyError;
+
+      // Save carrier-specific information to carriers table
+      const carrierData = {
+        company_name: data.companyName || '',
+        license_number: data.licenseNumber,
+        phone: data.phone,
+        email: data.email,
+        address: data.address,
+        vehicle_types: data.vehicleTypes,
+        capacity: data.capacity,
+        service_areas: data.serviceAreas,
+        certifications: data.certifications,
+        insurance_details: data.insurance,
+        temperature_control: data.temperatureControl || false,
+        mode_of_transport: data.modeOfTransport,
+        origin_destinations: data.originDestinations,
+        estimated_transit_time: data.estimatedTransitTime,
+        shipment_schedule: data.shipmentSchedule,
+        container_details: data.containerDetails,
+        freight_cost: data.freightCost,
+        included_services: data.includedServices,
+        documents_compliance: data.documentsCompliance,
+        tracking_support_details: data.trackingSupportDetails,
+        special_requirements: data.specialRequirements,
+        user_id: user.id
+      };
+
+      const { error: carrierError } = await supabase
+        .from('carriers')
+        .upsert(carrierData, {
+          onConflict: 'user_id'
+        });
+
+      if (carrierError) throw carrierError;
+
+      setIsRegistrationComplete(true);
+      toast.success('Transport registration completed successfully!');
+    } catch (error) {
+      console.error('Error saving carrier data:', error);
+      toast.error('Failed to save carrier data. Please try again.');
+    }
+  };
 
   const analyzeMessage = (message: string): Partial<TransportData> => {
     const extracted: Partial<TransportData> = {};
@@ -99,6 +184,75 @@ export default function TransportRegistration() {
       extracted.temperatureControl = true;
     }
 
+    // Extract contact info
+    const emailMatch = message.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+    if (emailMatch) {
+      extracted.email = emailMatch[1];
+    }
+
+    const phoneMatch = message.match(/(\+?[\d\s\-\(\)]{10,})/);
+    if (phoneMatch) {
+      extracted.phone = phoneMatch[1].trim();
+    }
+
+    // Extract mode of transport
+    const transportModes = ['truck', 'rail', 'air', 'sea', 'road', 'maritime', 'intermodal'];
+    const foundModes = transportModes.filter(mode => 
+      message.toLowerCase().includes(mode)
+    );
+    if (foundModes.length > 0) {
+      extracted.modeOfTransport = foundModes;
+    }
+
+    // Extract origin/destination routes
+    const routeMatch = message.match(/(?:from|to|route)[\s:]*([^.,\n]+)/i);
+    if (routeMatch) {
+      extracted.originDestinations = [routeMatch[1].trim()];
+    }
+
+    // Extract transit time
+    const timeMatch = message.match(/(\d+[\s\-]*(?:days?|hours?|weeks?))/i);
+    if (timeMatch) {
+      extracted.estimatedTransitTime = timeMatch[1];
+    }
+
+    // Extract scheduling info
+    if (message.toLowerCase().includes('schedule') || message.toLowerCase().includes('weekly') || message.toLowerCase().includes('daily')) {
+      const scheduleMatch = message.match(/(?:schedule|weekly|daily)[\s:]*([^.,\n]+)/i);
+      if (scheduleMatch) {
+        extracted.shipmentSchedule = scheduleMatch[1].trim();
+      }
+    }
+
+    // Extract freight cost
+    const costMatch = message.match(/\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:per|\/)\s*(?:kg|ton|mile|km)/i);
+    if (costMatch) {
+      extracted.freightCost = costMatch[0];
+    }
+
+    // Extract services
+    const services = ['door-to-door', 'warehouse', 'packaging', 'loading', 'unloading', 'tracking', 'insurance'];
+    const foundServices = services.filter(service => 
+      message.toLowerCase().includes(service)
+    );
+    if (foundServices.length > 0) {
+      extracted.includedServices = foundServices;
+    }
+
+    // Extract compliance/documents
+    const docs = ['bill of lading', 'customs', 'freight bill', 'delivery receipt', 'insurance certificate'];
+    const foundDocs = docs.filter(doc => 
+      message.toLowerCase().includes(doc)
+    );
+    if (foundDocs.length > 0) {
+      extracted.documentsCompliance = foundDocs;
+    }
+
+    // Extract tracking support
+    if (message.toLowerCase().includes('tracking') || message.toLowerCase().includes('gps') || message.toLowerCase().includes('real-time')) {
+      extracted.trackingSupportDetails = 'Available';
+    }
+
     return extracted;
   };
 
@@ -111,8 +265,17 @@ export default function TransportRegistration() {
     if (!currentData.licenseNumber) {
       missingFields.push('transport license number');
     }
+    if (!currentData.phone && !userData.phone) {
+      missingFields.push('contact phone');
+    }
+    if (!currentData.email && !userData.email) {
+      missingFields.push('email address');
+    }
     if (!currentData.vehicleTypes?.length && !userData.vehicleTypes?.length) {
       missingFields.push('vehicle types');
+    }
+    if (!currentData.modeOfTransport?.length && !userData.modeOfTransport?.length) {
+      missingFields.push('mode of transport');
     }
     if (!currentData.serviceAreas?.length && !userData.serviceAreas?.length) {
       missingFields.push('service coverage areas');
@@ -120,11 +283,11 @@ export default function TransportRegistration() {
     if (!currentData.capacity && !userData.capacity) {
       missingFields.push('transport capacity');
     }
-    if (!currentData.insurance) {
-      missingFields.push('insurance details');
+    if (!currentData.freightCost && !userData.freightCost) {
+      missingFields.push('freight rates');
     }
-    if (!currentData.certifications?.length) {
-      missingFields.push('transport certifications (DOT, HAZMAT, etc.)');
+    if (!currentData.estimatedTransitTime && !userData.estimatedTransitTime) {
+      missingFields.push('estimated transit time');
     }
 
     if (Object.keys(userData).length > 0) {
@@ -133,8 +296,11 @@ export default function TransportRegistration() {
       
       if (userData.companyName) extractedItems.push(`company: ${userData.companyName}`);
       if (userData.vehicleTypes) extractedItems.push(`vehicles: ${userData.vehicleTypes.join(', ')}`);
+      if (userData.modeOfTransport) extractedItems.push(`transport modes: ${userData.modeOfTransport.join(', ')}`);
       if (userData.serviceAreas) extractedItems.push(`service areas: ${userData.serviceAreas.join(', ')}`);
       if (userData.capacity) extractedItems.push(`capacity: ${userData.capacity}`);
+      if (userData.freightCost) extractedItems.push(`rates: ${userData.freightCost}`);
+      if (userData.estimatedTransitTime) extractedItems.push(`transit time: ${userData.estimatedTransitTime}`);
       if (userData.temperatureControl) extractedItems.push('temperature-controlled transport capability');
       
       response += extractedItems.join(', ') + ". ";
@@ -144,8 +310,10 @@ export default function TransportRegistration() {
         
         if (missingFields.includes('transport license number')) {
           response += "What\'s your DOT or transport license number? ";
-        } else if (missingFields.includes('insurance details')) {
-          response += "Please provide your cargo insurance information. ";
+        } else if (missingFields.includes('freight rates')) {
+          response += "What are your freight rates? ";
+        } else if (missingFields.includes('mode of transport')) {
+          response += "What modes of transport do you offer? ";
         }
       } else {
         response += "\n\n🚛 Registration nearly complete! Just finalizing transport credentials.";
@@ -175,22 +343,51 @@ export default function TransportRegistration() {
     setCurrentMessage('');
     setIsTyping(true);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       const extractedData = analyzeMessage(currentMessage);
       const newTransportData = { ...transportData, ...extractedData };
       
-      const totalFields = 7;
+      // Calculate completeness - all 18 main fields
+      const totalFields = 18;
       let filledFields = 0;
       if (newTransportData.companyName) filledFields++;
       if (newTransportData.licenseNumber) filledFields++;
+      if (newTransportData.phone) filledFields++;
+      if (newTransportData.email) filledFields++;
+      if (newTransportData.address) filledFields++;
       if (newTransportData.vehicleTypes?.length) filledFields++;
+      if (newTransportData.modeOfTransport?.length) filledFields++;
       if (newTransportData.serviceAreas?.length) filledFields++;
       if (newTransportData.capacity) filledFields++;
       if (newTransportData.insurance) filledFields++;
       if (newTransportData.certifications?.length) filledFields++;
+      if (newTransportData.originDestinations?.length) filledFields++;
+      if (newTransportData.estimatedTransitTime) filledFields++;
+      if (newTransportData.shipmentSchedule) filledFields++;
+      if (newTransportData.freightCost) filledFields++;
+      if (newTransportData.includedServices?.length) filledFields++;
+      if (newTransportData.trackingSupportDetails) filledFields++;
+      if (newTransportData.documentsCompliance?.length) filledFields++;
       
       newTransportData.completeness = Math.round((filledFields / totalFields) * 100);
       setTransportData(newTransportData);
+
+      // Check if registration is complete and save to database
+      if (newTransportData.completeness === 100 && !isRegistrationComplete) {
+        await saveCarrierData(newTransportData);
+        
+        // Add completion message
+        const completionMessage: Message = {
+          id: (Date.now() + 2).toString(),
+          type: 'ai',
+          content: "🎉 Congratulations! Your transport registration is now complete and has been saved to our database. You can now access our platform and connect with shippers.",
+          timestamp: new Date()
+        };
+        
+        setMessages(prev => [...prev, completionMessage]);
+        setIsTyping(false);
+        return; // Don't show the regular AI response
+      }
 
       const aiResponse = generateAIResponse(extractedData, transportData);
       
@@ -237,6 +434,9 @@ export default function TransportRegistration() {
               <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 text-primary" />
                 Registration Progress
+                {isRegistrationComplete && (
+                  <Badge variant="default" className="ml-2 bg-primary">Complete</Badge>
+                )}
               </h3>
               
               <div className="mb-4">
@@ -275,6 +475,54 @@ export default function TransportRegistration() {
                   <div className={`w-2 h-2 rounded-full ${transportData.capacity ? 'bg-primary' : 'bg-muted'}`} />
                   <span className="text-sm">Transport Capacity</span>
                   {transportData.capacity && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${transportData.modeOfTransport?.length ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Mode of Transport</span>
+                  {transportData.modeOfTransport?.length && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${transportData.originDestinations?.length ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Origin & Destination</span>
+                  {transportData.originDestinations?.length && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${transportData.estimatedTransitTime ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Estimated Transit Time</span>
+                  {transportData.estimatedTransitTime && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${transportData.shipmentSchedule ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Shipment Schedule</span>
+                  {transportData.shipmentSchedule && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${transportData.freightCost ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Freight Cost</span>
+                  {transportData.freightCost && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${transportData.includedServices?.length ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Included Services</span>
+                  {transportData.includedServices?.length && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${transportData.documentsCompliance?.length ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Documents & Compliance</span>
+                  {transportData.documentsCompliance?.length && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${transportData.trackingSupportDetails ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Tracking & Support</span>
+                  {transportData.trackingSupportDetails && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
               </div>
 
@@ -377,13 +625,13 @@ export default function TransportRegistration() {
                     value={currentMessage}
                     onChange={(e) => setCurrentMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="Tell me about your transport company and fleet..."
+                    placeholder={isRegistrationComplete ? "Registration completed!" : "Tell me about your transport company and fleet..."}
                     className="flex-1"
-                    disabled={isTyping}
+                    disabled={isTyping || isRegistrationComplete}
                   />
                   <Button 
                     onClick={sendMessage}
-                    disabled={!currentMessage.trim() || isTyping}
+                    disabled={!currentMessage.trim() || isTyping || isRegistrationComplete}
                     size="icon"
                     className="bg-gradient-button hover:opacity-90 text-white border-0"
                   >
