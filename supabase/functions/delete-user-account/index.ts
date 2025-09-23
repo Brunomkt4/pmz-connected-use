@@ -18,11 +18,28 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Get environment variables
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+
+    if (!supabaseUrl || !supabaseServiceRoleKey || !supabaseAnonKey) {
+      console.error("Missing environment variables:", {
+        supabaseUrl: !!supabaseUrl,
+        supabaseServiceRoleKey: !!supabaseServiceRoleKey,
+        supabaseAnonKey: !!supabaseAnonKey
+      });
+      return new Response(
+        JSON.stringify({ error: "Server configuration error" }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
     // Create Supabase client with service role key for admin operations
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
 
     const { userId }: DeleteAccountRequest = await req.json();
 
@@ -49,10 +66,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Verify the user is authenticated and can only delete their own account
-    const supabaseUser = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? ""
-    );
+    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey);
 
     const { data: { user }, error: authError } = await supabaseUser.auth.getUser(
       authHeader.replace("Bearer ", "")
