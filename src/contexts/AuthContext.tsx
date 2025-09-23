@@ -10,6 +10,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName: string, accountTypeId: number, companyName?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -72,6 +73,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           variant: "destructive",
         });
       } else {
+        // Send welcome email
+        try {
+          const { data: accountTypes } = await supabase
+            .from("account_types")
+            .select("name")
+            .eq("id", accountTypeId)
+            .single();
+
+          await supabase.functions.invoke('send-welcome-email', {
+            body: {
+              email,
+              name: fullName,
+              accountType: accountTypes?.name || 'User'
+            }
+          });
+        } catch (emailError) {
+          console.error("Error sending welcome email:", emailError);
+          // Don't show error to user for email failure
+        }
+
         toast({
           title: "Success!",
           description: "Please check your email to verify your account.",
@@ -130,6 +151,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const deleteAccount = async () => {
+    try {
+      if (!user) {
+        return { error: { message: "No user logged in" } };
+      }
+
+      // Call edge function to delete user account and all associated data
+      const { error } = await supabase.functions.invoke('delete-user-account', {
+        body: { userId: user.id }
+      });
+
+      if (error) {
+        toast({
+          title: "Account Deletion Error",
+          description: error.message,
+          variant: "destructive",
+        });
+        return { error };
+      }
+
+      toast({
+        title: "Account deleted successfully",
+        description: "Your account and all associated data have been permanently deleted.",
+      });
+
+      return { error: null };
+    } catch (error: any) {
+      toast({
+        title: "Account Deletion Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      return { error };
+    }
+  };
+
   const value = {
     user,
     session,
@@ -137,6 +194,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     signUp,
     signIn,
     signOut,
+    deleteAccount,
   };
 
   return (
