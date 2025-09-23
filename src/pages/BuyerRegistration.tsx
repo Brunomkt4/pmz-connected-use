@@ -492,6 +492,48 @@ export default function BuyerRegistration() {
                   <span>Delivery Destination</span>
                   {buyerData.deliveryDestination && <CheckCircle className="h-3 w-3 text-primary ml-auto" />}
                 </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${buyerData.requiredDeliveryDate ? 'bg-primary' : 'bg-muted'}`} />
+                  <span>Required Delivery Date</span>
+                  {buyerData.requiredDeliveryDate && <CheckCircle className="h-3 w-3 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${buyerData.preferredPaymentMethod ? 'bg-primary' : 'bg-muted'}`} />
+                  <span>Payment Method Preference</span>
+                  {buyerData.preferredPaymentMethod && <CheckCircle className="h-3 w-3 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${buyerData.financingNeeds ? 'bg-primary' : 'bg-muted'}`} />
+                  <span>Financing or Credit Needs</span>
+                  {buyerData.financingNeeds && <CheckCircle className="h-3 w-3 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${buyerData.certificationRequirements?.length ? 'bg-primary' : 'bg-muted'}`} />
+                  <span>Certification Requirements</span>
+                  {buyerData.certificationRequirements?.length && <CheckCircle className="h-3 w-3 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${buyerData.insuranceRequirements ? 'bg-primary' : 'bg-muted'}`} />
+                  <span>Insurance Requirements</span>
+                  {buyerData.insuranceRequirements && <CheckCircle className="h-3 w-3 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${buyerData.bankGuaranteeDetails || buyerData.letterOfCreditDetails ? 'bg-primary' : 'bg-muted'}`} />
+                  <span>Bank Guarantee or L/C Details</span>
+                  {(buyerData.bankGuaranteeDetails || buyerData.letterOfCreditDetails) && <CheckCircle className="h-3 w-3 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${buyerData.additionalComments ? 'bg-primary' : 'bg-muted'}`} />
+                  <span>Additional Comments</span>
+                  {buyerData.additionalComments && <CheckCircle className="h-3 w-3 text-primary ml-auto" />}
+                </div>
               </div>
 
               {buyerData.companyName && (
