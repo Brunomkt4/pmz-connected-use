@@ -38,93 +38,54 @@ export type Database = {
       companies: {
         Row: {
           account_type_id: number
-          additional_comments: string | null
           address: string | null
-          available_certifications: string[] | null
-          available_quantity: string | null
           capacity: string | null
           certifications: string[] | null
           cnpj: string | null
-          contact_person: string | null
           created_at: string
           delivery_location: string | null
           delivery_time: string | null
           email: string | null
           id: string
-          incoterm: string | null
           minimum_order_quantity: string | null
           name: string
-          offer_validity: string | null
-          packaging: string | null
-          payment_method: string | null
           phone: string | null
-          price_per_unit: string | null
-          product_types: string[] | null
-          products: string[] | null
-          shipping_details: string | null
-          sif_registration: string | null
           technical_datasheet: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
           account_type_id: number
-          additional_comments?: string | null
           address?: string | null
-          available_certifications?: string[] | null
-          available_quantity?: string | null
           capacity?: string | null
           certifications?: string[] | null
           cnpj?: string | null
-          contact_person?: string | null
           created_at?: string
           delivery_location?: string | null
           delivery_time?: string | null
           email?: string | null
           id?: string
-          incoterm?: string | null
           minimum_order_quantity?: string | null
           name: string
-          offer_validity?: string | null
-          packaging?: string | null
-          payment_method?: string | null
           phone?: string | null
-          price_per_unit?: string | null
-          product_types?: string[] | null
-          products?: string[] | null
-          shipping_details?: string | null
-          sif_registration?: string | null
           technical_datasheet?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
           account_type_id?: number
-          additional_comments?: string | null
           address?: string | null
-          available_certifications?: string[] | null
-          available_quantity?: string | null
           capacity?: string | null
           certifications?: string[] | null
           cnpj?: string | null
-          contact_person?: string | null
           created_at?: string
           delivery_location?: string | null
           delivery_time?: string | null
           email?: string | null
           id?: string
-          incoterm?: string | null
           minimum_order_quantity?: string | null
           name?: string
-          offer_validity?: string | null
-          packaging?: string | null
-          payment_method?: string | null
           phone?: string | null
-          price_per_unit?: string | null
-          product_types?: string[] | null
-          products?: string[] | null
-          shipping_details?: string | null
-          sif_registration?: string | null
           technical_datasheet?: string | null
           updated_at?: string
           user_id?: string | null
@@ -194,6 +155,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      suppliers: {
+        Row: {
+          additional_comments: string | null
+          address: string | null
+          available_certifications: string[] | null
+          available_quantity: string | null
+          cnpj: string | null
+          contact_person: string | null
+          created_at: string
+          email: string | null
+          id: string
+          incoterm: string | null
+          name: string
+          offer_validity: string | null
+          packaging: string | null
+          payment_method: string | null
+          phone: string | null
+          price_per_unit: string | null
+          product_types: string[] | null
+          products: string[] | null
+          shipping_details: string | null
+          sif_registration: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          additional_comments?: string | null
+          address?: string | null
+          available_certifications?: string[] | null
+          available_quantity?: string | null
+          cnpj?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          incoterm?: string | null
+          name: string
+          offer_validity?: string | null
+          packaging?: string | null
+          payment_method?: string | null
+          phone?: string | null
+          price_per_unit?: string | null
+          product_types?: string[] | null
+          products?: string[] | null
+          shipping_details?: string | null
+          sif_registration?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          additional_comments?: string | null
+          address?: string | null
+          available_certifications?: string[] | null
+          available_quantity?: string | null
+          cnpj?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          incoterm?: string | null
+          name?: string
+          offer_validity?: string | null
+          packaging?: string | null
+          payment_method?: string | null
+          phone?: string | null
+          price_per_unit?: string | null
+          product_types?: string[] | null
+          products?: string[] | null
+          shipping_details?: string | null
+          sif_registration?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       user_companies: {
         Row: {

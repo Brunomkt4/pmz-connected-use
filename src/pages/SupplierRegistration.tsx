@@ -78,29 +78,23 @@ export default function SupplierRegistration() {
     }
 
     try {
-      // First, check if user has a company
-      const { data: companies, error: companiesError } = await supabase
-        .from('companies')
+      // First, check if user has a supplier record
+      const { data: suppliers, error: suppliersError } = await supabase
+        .from('suppliers')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (companiesError) throw companiesError;
+      if (suppliersError) throw suppliersError;
 
-      const companyData = {
+      const supplierData = {
         name: data.companyName || '',
         cnpj: data.cnpj,
         address: data.address,
         phone: data.phone,
         email: data.email,
         products: data.products,
-        certifications: data.certifications,
-        capacity: data.capacity,
-        technical_datasheet: data.technicalDatasheet,
         product_types: data.productTypes,
-        minimum_order_quantity: data.minimumOrderQuantity,
-        delivery_time: data.deliveryTime,
-        delivery_location: data.deliveryLocation,
         sif_registration: data.sifRegistration,
         contact_person: data.contactPerson,
         available_certifications: data.availableCertifications,
@@ -112,23 +106,22 @@ export default function SupplierRegistration() {
         packaging: data.packaging,
         offer_validity: data.offerValidity,
         additional_comments: data.additionalComments,
-        account_type_id: 1, // Supplier account type
         user_id: user.id
       };
 
-      if (companies) {
-        // Update existing company
+      if (suppliers) {
+        // Update existing supplier
         const { error: updateError } = await supabase
-          .from('companies')
-          .update(companyData)
-          .eq('id', companies.id);
+          .from('suppliers')
+          .update(supplierData)
+          .eq('id', suppliers.id);
 
         if (updateError) throw updateError;
       } else {
-        // Create new company
+        // Create new supplier
         const { error: insertError } = await supabase
-          .from('companies')
-          .insert([companyData]);
+          .from('suppliers')
+          .insert([supplierData]);
 
         if (insertError) throw insertError;
       }
