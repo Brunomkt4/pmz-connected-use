@@ -378,12 +378,9 @@ export default function SupplierRegistration() {
       return response;
     }
 
-    // No new data extracted
-    if (missingFields.length > 0) {
-      return `I understand! I'll need some additional information to complete the registration. Could you provide the ${missingFields[0]}?`;
+    if (missingFields.length === 0) {
+      return "🎉 Perfect! All required information has been collected. Your registration is being processed and will be saved to our database.";
     }
-
-    return "Excellent! All main information has been collected. I will process your registration.";
   };
 
   const sendMessage = async () => {
@@ -437,6 +434,17 @@ export default function SupplierRegistration() {
       // Check if registration is complete and save to database
       if (newSupplierData.completeness === 100 && !isRegistrationComplete) {
         await saveSupplierData(newSupplierData);
+        
+        // Add completion message
+        const completionMessage: Message = {
+          id: (Date.now() + 2).toString(),
+          type: 'ai',
+          content: "🎉 Congratulations! Your supplier registration is now complete and has been saved to our database. You can now participate in our platform and receive purchase orders from buyers.",
+          timestamp: new Date()
+        };
+        
+        setMessages(prev => [...prev, completionMessage]);
+        return; // Don't show the regular AI response
       }
 
       const aiResponse = generateAIResponse(extractedData, supplierData);
@@ -499,6 +507,12 @@ export default function SupplierRegistration() {
                     style={{ width: `${supplierData.completeness}%` }}
                   />
                 </div>
+                {isRegistrationComplete && (
+                  <div className="mt-2 flex items-center gap-2 text-primary text-sm font-medium">
+                    <CheckCircle className="h-4 w-4" />
+                    Registration Complete!
+                  </div>
+                )}
               </div>
 
               <div className="space-y-3">
@@ -691,24 +705,31 @@ export default function SupplierRegistration() {
 
               {/* Input Area */}
               <div className="p-6 border-t border-border">
-                <div className="flex gap-2">
-                  <Input
-                    value={currentMessage}
-                    onChange={(e) => setCurrentMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Enter your company information..."
-                    className="flex-1"
-                    disabled={isTyping}
-                  />
-                  <Button 
-                    onClick={sendMessage}
-                    disabled={!currentMessage.trim() || isTyping}
-                    size="icon"
-                    className="bg-gradient-button hover:opacity-90 text-white border-0"
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
+                {!isRegistrationComplete ? (
+                  <div className="flex gap-2">
+                    <Input
+                      value={currentMessage}
+                      onChange={(e) => setCurrentMessage(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Enter your company information..."
+                      className="flex-1"
+                      disabled={isTyping}
+                    />
+                    <Button 
+                      onClick={sendMessage}
+                      disabled={!currentMessage.trim() || isTyping}
+                      size="icon"
+                      className="bg-gradient-button hover:opacity-90 text-white border-0"
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-center text-muted-foreground">
+                    <CheckCircle className="h-8 w-8 text-primary mx-auto mb-2" />
+                    Registration completed! Your data has been saved successfully.
+                  </div>
+                )}
               </div>
             </Card>
           </div>
