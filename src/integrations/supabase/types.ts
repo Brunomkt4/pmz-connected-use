@@ -35,6 +35,84 @@ export type Database = {
         }
         Relationships: []
       }
+      buyers: {
+        Row: {
+          additional_comments: string | null
+          address: string | null
+          bank_guarantee_details: string | null
+          business_number: string | null
+          certification_requirements: string[] | null
+          contact_person: string | null
+          created_at: string
+          delivery_conditions: string | null
+          delivery_destination: string | null
+          email: string | null
+          financing_needs: string | null
+          id: string
+          insurance_requirements: string | null
+          letter_of_credit_details: string | null
+          name: string
+          phone: string | null
+          preferred_payment_method: string | null
+          product_requirements: string[] | null
+          quantity_required: string | null
+          required_delivery_date: string | null
+          target_price: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          additional_comments?: string | null
+          address?: string | null
+          bank_guarantee_details?: string | null
+          business_number?: string | null
+          certification_requirements?: string[] | null
+          contact_person?: string | null
+          created_at?: string
+          delivery_conditions?: string | null
+          delivery_destination?: string | null
+          email?: string | null
+          financing_needs?: string | null
+          id?: string
+          insurance_requirements?: string | null
+          letter_of_credit_details?: string | null
+          name: string
+          phone?: string | null
+          preferred_payment_method?: string | null
+          product_requirements?: string[] | null
+          quantity_required?: string | null
+          required_delivery_date?: string | null
+          target_price?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          additional_comments?: string | null
+          address?: string | null
+          bank_guarantee_details?: string | null
+          business_number?: string | null
+          certification_requirements?: string[] | null
+          contact_person?: string | null
+          created_at?: string
+          delivery_conditions?: string | null
+          delivery_destination?: string | null
+          email?: string | null
+          financing_needs?: string | null
+          id?: string
+          insurance_requirements?: string | null
+          letter_of_credit_details?: string | null
+          name?: string
+          phone?: string | null
+          preferred_payment_method?: string | null
+          product_requirements?: string[] | null
+          quantity_required?: string | null
+          required_delivery_date?: string | null
+          target_price?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       companies: {
         Row: {
           account_type_id: number
