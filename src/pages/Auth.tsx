@@ -1,28 +1,56 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
+
+interface AccountType {
+  id: number;
+  name: string;
+  description: string;
+}
 
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [userType, setUserType] = useState('');
+  const [accountTypeId, setAccountTypeId] = useState<number | null>(null);
+  const [companyName, setCompanyName] = useState('');
+  const [accountTypes, setAccountTypes] = useState<AccountType[]>([]);
   const [loading, setLoading] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect authenticated users to home
+  // Redirect if already authenticated
   useEffect(() => {
     if (user) {
       navigate('/');
     }
   }, [user, navigate]);
+
+  // Fetch account types
+  useEffect(() => {
+    const fetchAccountTypes = async () => {
+      const { data, error } = await supabase
+        .from('account_types')
+        .select('*')
+        .order('id');
+      
+      if (data && !error) {
+        setAccountTypes(data);
+      }
+    };
+    
+    fetchAccountTypes();
+  }, []);
+
+  // Check if current account type requires company
+  const requiresCompany = accountTypeId ? [1, 3, 4, 5, 6].includes(accountTypeId) : false;
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,15 +69,28 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password || !fullName || !userType) {
+    if (!email || !password || !fullName || !accountTypeId) {
+      return;
+    }
+
+    // Validate company name for business account types
+    if (requiresCompany && !companyName.trim()) {
       return;
     }
 
     setLoading(true);
-    const { error } = await signUp(email, password, fullName, userType);
+    const { error } = await signUp(email, password, fullName, accountTypeId, requiresCompany ? companyName : undefined);
     setLoading(false);
 
     // Don't navigate immediately after signup - user needs to verify email first
+    if (!error) {
+      // Reset form
+      setEmail('');
+      setPassword('');
+      setFullName('');
+      setAccountTypeId(null);
+      setCompanyName('');
+    }
   };
 
   return (
@@ -140,21 +181,33 @@ const Auth = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="user-type">Account Type</Label>
-                  <Select value={userType} onValueChange={setUserType} required>
+                  <Label htmlFor="account-type">Account Type</Label>
+                  <Select value={accountTypeId?.toString() || ''} onValueChange={(value) => setAccountTypeId(parseInt(value))} required>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select your account type" />
                     </SelectTrigger>
                     <SelectContent className="bg-background border border-border shadow-lg">
-                      <SelectItem value="Seller">Seller</SelectItem>
-                      <SelectItem value="Buyer">Buyer</SelectItem>
-                      <SelectItem value="Insurance Company">Insurance Company</SelectItem>
-                      <SelectItem value="Carrier / Transportation Company">Carrier / Transportation Company</SelectItem>
-                      <SelectItem value="Bank Guarantee">Bank Guarantee</SelectItem>
-                      <SelectItem value="Financing">Financing</SelectItem>
+                      {accountTypes.map((type) => (
+                        <SelectItem key={type.id} value={type.id.toString()}>
+                          {type.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
+                {requiresCompany && (
+                  <div className="space-y-2">
+                    <Label htmlFor="company-name">Company Name</Label>
+                    <Input
+                      id="company-name"
+                      type="text"
+                      placeholder="Enter your company name"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      required={requiresCompany}
+                    />
+                  </div>
+                )}
                 <Button
                   type="submit"
                   className="w-full"
