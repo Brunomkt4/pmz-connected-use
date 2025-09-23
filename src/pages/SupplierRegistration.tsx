@@ -18,8 +18,6 @@ interface SupplierData {
   companyName?: string;
   cnpj?: string;
   address?: string;
-  phone?: string;
-  email?: string;
   products?: string[];
   certifications?: string[];
   capacity?: string;
@@ -258,12 +256,6 @@ export default function SupplierRegistration() {
     if (!currentData.offerValidity && !userData.offerValidity) {
       missingFields.push('offer validity period');
     }
-    if (!currentData.phone) {
-      missingFields.push('phone number');
-    }
-    if (!currentData.email) {
-      missingFields.push('email address');
-    }
 
     // If we extracted new data
     if (Object.keys(userData).length > 0) {
@@ -331,12 +323,10 @@ export default function SupplierRegistration() {
       const newSupplierData = { ...supplierData, ...extractedData };
       
       // Calculate completeness
-      const totalFields = 21; // All required fields including new ones
+      const totalFields = 19; // All required fields including new ones
       let filledFields = 0;
       if (newSupplierData.cnpj) filledFields++;
       if (newSupplierData.address) filledFields++;
-      if (newSupplierData.phone) filledFields++;
-      if (newSupplierData.email) filledFields++;
       if (newSupplierData.certifications?.length) filledFields++;
       if (newSupplierData.capacity) filledFields++;
       if (newSupplierData.technicalDatasheet) filledFields++;
