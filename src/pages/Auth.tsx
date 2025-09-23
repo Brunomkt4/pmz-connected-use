@@ -6,11 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [userType, setUserType] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
@@ -39,12 +41,12 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password || !fullName) {
+    if (!email || !password || !fullName || !userType) {
       return;
     }
 
     setLoading(true);
-    const { error } = await signUp(email, password, fullName);
+    const { error } = await signUp(email, password, fullName, userType);
     setLoading(false);
 
     // Don't navigate immediately after signup - user needs to verify email first
@@ -136,6 +138,22 @@ const Auth = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="user-type">Account Type</Label>
+                  <Select value={userType} onValueChange={setUserType} required>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select your account type" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border border-border shadow-lg">
+                      <SelectItem value="Seller">Seller</SelectItem>
+                      <SelectItem value="Buyer">Buyer</SelectItem>
+                      <SelectItem value="Insurance Company">Insurance Company</SelectItem>
+                      <SelectItem value="Carrier / Transportation Company">Carrier / Transportation Company</SelectItem>
+                      <SelectItem value="Bank Guarantee">Bank Guarantee</SelectItem>
+                      <SelectItem value="Financing">Financing</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Button
                   type="submit"
