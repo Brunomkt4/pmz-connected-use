@@ -20,6 +20,7 @@ const profileSchema = z.object({
   full_name: z.string().min(2, "Full name must be at least 2 characters").optional().or(z.literal("")),
   email: z.string().email("Invalid email address").optional().or(z.literal("")),
   phone: z.string().min(10, "Phone number must be at least 10 digits").optional().or(z.literal("")),
+  company_id: z.string().optional(),
 });
 
 const preferencesSchema = z.object({
@@ -31,6 +32,12 @@ const preferencesSchema = z.object({
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 type PreferencesFormData = z.infer<typeof preferencesSchema>;
+
+interface Company {
+  id: string;
+  name: string;
+  account_type_id: number;
+}
 
 const languages = [
   { value: "en", label: "English" },
@@ -66,6 +73,7 @@ export default function Settings() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [companies, setCompanies] = useState<Company[]>([]);
 
   const profileForm = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -73,6 +81,7 @@ export default function Settings() {
       full_name: "",
       email: "",
       phone: "",
+      company_id: "",
     },
   });
 
@@ -94,14 +103,21 @@ export default function Settings() {
 
   const loadUserProfile = async () => {
     try {
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", user?.id)
-        .maybeSingle();
+      // Load both profile and companies data
+      const [profileResponse, companiesResponse] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", user?.id)
+          .maybeSingle(),
+        supabase
+          .from("companies")
+          .select("*")
+          .order("name")
+      ]);
 
-      if (error) {
-        console.error("Error loading profile:", error);
+      if (profileResponse.error) {
+        console.error("Error loading profile:", profileResponse.error);
         toast({
           title: "Error",
           description: "Failed to load profile data",
@@ -110,11 +126,19 @@ export default function Settings() {
         return;
       }
 
+      if (companiesResponse.error) {
+        console.error("Error loading companies:", companiesResponse.error);
+      }
+
+      const profile = profileResponse.data;
+      const companies = companiesResponse.data || [];
+
       if (profile) {
         profileForm.reset({
           full_name: profile.full_name || "",
           email: profile.email || "",
           phone: profile.phone || "",
+          company_id: profile.company_id || "",
         });
 
         preferencesForm.reset({
@@ -124,6 +148,8 @@ export default function Settings() {
           date_format: profile.date_format || "MM/dd/yyyy",
         });
       }
+
+      setCompanies(companies);
     } catch (error) {
       console.error("Error loading profile:", error);
       toast({
@@ -145,6 +171,7 @@ export default function Settings() {
           full_name: data.full_name || null,
           email: data.email || null,
           phone: data.phone || null,
+          company_id: data.company_id || null,
         })
         .eq("user_id", user?.id);
 
@@ -298,6 +325,31 @@ export default function Settings() {
                     )}
                   />
 
+                  <FormField
+                    control={profileForm.control}
+                    name="company_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Company</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a company" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="">No company</SelectItem>
+                            {companies.map((company) => (
+                              <SelectItem key={company.id} value={company.id}>
+                                {company.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <Button type="submit" disabled={isSaving} className="w-full sm:w-auto">
                     {isSaving ? (
