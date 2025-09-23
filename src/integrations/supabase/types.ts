@@ -14,8 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_types: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: number
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: number
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
+          account_type_id: number
           company_name: string | null
           country: string | null
           created_at: string
@@ -29,9 +51,9 @@ export type Database = {
           timezone: string | null
           updated_at: string
           user_id: string
-          user_type: string | null
         }
         Insert: {
+          account_type_id: number
           company_name?: string | null
           country?: string | null
           created_at?: string
@@ -45,9 +67,9 @@ export type Database = {
           timezone?: string | null
           updated_at?: string
           user_id: string
-          user_type?: string | null
         }
         Update: {
+          account_type_id?: number
           company_name?: string | null
           country?: string | null
           created_at?: string
@@ -61,9 +83,16 @@ export type Database = {
           timezone?: string | null
           updated_at?: string
           user_id?: string
-          user_type?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_account_type_id_fkey"
+            columns: ["account_type_id"]
+            isOneToOne: false
+            referencedRelation: "account_types"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
