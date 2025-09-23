@@ -20,7 +20,6 @@ const profileSchema = z.object({
   full_name: z.string().min(2, "Full name must be at least 2 characters").optional().or(z.literal("")),
   email: z.string().email("Invalid email address").optional().or(z.literal("")),
   phone: z.string().min(10, "Phone number must be at least 10 digits").optional().or(z.literal("")),
-  company_name: z.string().min(2, "Company name must be at least 2 characters").optional().or(z.literal("")),
 });
 
 const preferencesSchema = z.object({
@@ -74,7 +73,6 @@ export default function Settings() {
       full_name: "",
       email: "",
       phone: "",
-      company_name: "",
     },
   });
 
@@ -117,7 +115,6 @@ export default function Settings() {
           full_name: profile.full_name || "",
           email: profile.email || "",
           phone: profile.phone || "",
-          company_name: profile.company_name || "",
         });
 
         preferencesForm.reset({
@@ -148,7 +145,6 @@ export default function Settings() {
           full_name: data.full_name || null,
           email: data.email || null,
           phone: data.phone || null,
-          company_name: data.company_name || null,
         })
         .eq("user_id", user?.id);
 
@@ -254,7 +250,7 @@ export default function Settings() {
             <CardHeader>
               <CardTitle>Profile Information</CardTitle>
               <CardDescription>
-                Update your personal and company information. All fields are optional.
+                Update your personal information. All fields are optional.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -302,19 +298,6 @@ export default function Settings() {
                     )}
                   />
 
-                  <FormField
-                    control={profileForm.control}
-                    name="company_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Company Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter your company name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
 
                   <Button type="submit" disabled={isSaving} className="w-full sm:w-auto">
                     {isSaving ? (
