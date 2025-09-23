@@ -29,6 +29,17 @@ interface SupplierData {
   minimumOrderQuantity?: string;
   deliveryTime?: string;
   deliveryLocation?: string;
+  sifRegistration?: string;
+  contactPerson?: string;
+  availableCertifications?: string[];
+  availableQuantity?: string;
+  pricePerUnit?: string;
+  incoterm?: string;
+  paymentMethod?: string;
+  shippingDetails?: string;
+  packaging?: string;
+  offerValidity?: string;
+  additionalComments?: string;
   completeness: number;
 }
 
@@ -125,6 +136,76 @@ export default function SupplierRegistration() {
       extracted.minimumOrderQuantity = quantityMatch[1];
     }
 
+    // Extract SIF registration
+    const sifMatch = message.match(/(?:sif|federal inspection service)[\s:]*(\d+)/i);
+    if (sifMatch) {
+      extracted.sifRegistration = sifMatch[1];
+    }
+
+    // Extract contact person
+    const contactMatch = message.match(/(?:contact|representative|manager|responsible)[\s:]*([A-Z][a-z]+ [A-Z][a-z]+)/i);
+    if (contactMatch) {
+      extracted.contactPerson = contactMatch[1];
+    }
+
+    // Extract available certifications
+    const certKeywords = ['haccp', 'brc', 'iso', 'fda', 'halal', 'kosher', 'organic', 'gmp', 'ssop'];
+    const foundCerts = certKeywords.filter(cert => 
+      message.toLowerCase().includes(cert)
+    );
+    if (foundCerts.length > 0) {
+      extracted.availableCertifications = foundCerts;
+    }
+
+    // Extract available quantity
+    const availableQuantityMatch = message.match(/(?:available|quantity|stock)[\s:]*(\d+[\s\w]*(?:kg|tons?|tonnes?|lbs?))/i);
+    if (availableQuantityMatch) {
+      extracted.availableQuantity = availableQuantityMatch[1];
+    }
+
+    // Extract price per unit
+    const priceMatch = message.match(/(?:price|cost)[\s:]*(?:\$|R\$|USD|BRL)?[\s]*(\d+(?:[.,]\d+)?(?:\s*(?:per|\/)\s*(?:kg|ton|unit))?)/i);
+    if (priceMatch) {
+      extracted.pricePerUnit = priceMatch[1];
+    }
+
+    // Extract Incoterm
+    const incotermMatch = message.match(/(FOB|CIF|CFR|FCA|CPT|CIP|DAP|DDP|EXW|FAS|DPU)/i);
+    if (incotermMatch) {
+      extracted.incoterm = incotermMatch[1].toUpperCase();
+    }
+
+    // Extract payment method
+    const paymentKeywords = ['cash', 'credit', 'bank transfer', 'wire transfer', 'letter of credit', 'documentary collection'];
+    const foundPayment = paymentKeywords.find(method => 
+      message.toLowerCase().includes(method)
+    );
+    if (foundPayment) {
+      extracted.paymentMethod = foundPayment;
+    }
+
+    // Extract packaging
+    const packagingMatch = message.match(/(?:packaging|packed in|package)[\s:]*([^.,\n]+)/i);
+    if (packagingMatch) {
+      extracted.packaging = packagingMatch[1]?.trim();
+    }
+
+    // Extract offer validity
+    const validityMatch = message.match(/(?:valid|validity|expires?)[\s:]*(\d+[\s\w]*(?:days?|weeks?|months?))/i);
+    if (validityMatch) {
+      extracted.offerValidity = validityMatch[1];
+    }
+
+    // Extract shipping details
+    if (message.toLowerCase().includes('shipping') || message.toLowerCase().includes('freight')) {
+      extracted.shippingDetails = 'Mentioned';
+    }
+
+    // Extract additional comments
+    if (message.toLowerCase().includes('note') || message.toLowerCase().includes('comment') || message.toLowerCase().includes('additional')) {
+      extracted.additionalComments = 'Provided';
+    }
+
     // Extract delivery location for time calculation
     const deliveryMatch = message.match(/(?:delivery|deliver|ship)[\s\w]*(?:to|in|at)\s+([^.,\n]+)/i);
     if (deliveryMatch) {
@@ -139,35 +220,49 @@ export default function SupplierRegistration() {
 
   const generateAIResponse = (userData: Partial<SupplierData>, currentData: SupplierData): string => {
     const missingFields = [];
+    
+    // Check all required fields
     if (!currentData.cnpj && !userData.cnpj) {
-      missingFields.push('registration number');
+      missingFields.push('CNPJ registration number');
+    }
+    if (!currentData.sifRegistration && !userData.sifRegistration) {
+      missingFields.push('SIF registration number');
+    }
+    if (!currentData.contactPerson && !userData.contactPerson) {
+      missingFields.push('contact person name');
     }
     if (!currentData.address && !userData.address) {
-      missingFields.push('address');
+      missingFields.push('company address');
+    }
+    if (!currentData.availableCertifications?.length && !userData.availableCertifications?.length) {
+      missingFields.push('available certifications (HACCP, ISO, FDA, etc.)');
+    }
+    if (!currentData.availableQuantity && !userData.availableQuantity) {
+      missingFields.push('available quantity');
+    }
+    if (!currentData.pricePerUnit && !userData.pricePerUnit) {
+      missingFields.push('price per unit');
+    }
+    if (!currentData.incoterm && !userData.incoterm) {
+      missingFields.push('Incoterm (FOB, CIF, etc.)');
+    }
+    if (!currentData.paymentMethod && !userData.paymentMethod) {
+      missingFields.push('payment method');
+    }
+    if (!currentData.shippingDetails && !userData.shippingDetails) {
+      missingFields.push('shipping details');
+    }
+    if (!currentData.packaging && !userData.packaging) {
+      missingFields.push('packaging information');
+    }
+    if (!currentData.offerValidity && !userData.offerValidity) {
+      missingFields.push('offer validity period');
     }
     if (!currentData.phone) {
-      missingFields.push('phone');
+      missingFields.push('phone number');
     }
     if (!currentData.email) {
-      missingFields.push('email');
-    }
-    if (!currentData.certifications || currentData.certifications.length === 0) {
-      missingFields.push('certifications (FDA, ISO, etc.)');
-    }
-    if (!currentData.capacity) {
-      missingFields.push('production capacity');
-    }
-    if (!currentData.technicalDatasheet) {
-      missingFields.push('product technical datasheet');
-    }
-    if (!currentData.productTypes || currentData.productTypes.length === 0) {
-      missingFields.push('product types');
-    }
-    if (!currentData.minimumOrderQuantity) {
-      missingFields.push('minimum order quantity');
-    }
-    if (!currentData.deliveryLocation) {
-      missingFields.push('delivery location to calculate timeframe');
+      missingFields.push('email address');
     }
 
     // If we extracted new data
@@ -175,19 +270,31 @@ export default function SupplierRegistration() {
       let response = "Perfect! I was able to identify ";
       const extractedItems = [];
       
-      if (userData.cnpj) extractedItems.push(`registration: ${userData.cnpj}`);
+      if (userData.cnpj) extractedItems.push(`CNPJ: ${userData.cnpj}`);
+      if (userData.sifRegistration) extractedItems.push(`SIF registration: ${userData.sifRegistration}`);
+      if (userData.contactPerson) extractedItems.push(`contact person: ${userData.contactPerson}`);
       if (userData.products) extractedItems.push(`products: ${userData.products.join(', ')}`);
       if (userData.address) extractedItems.push(`location: ${userData.address}`);
+      if (userData.availableQuantity) extractedItems.push(`available quantity: ${userData.availableQuantity}`);
+      if (userData.pricePerUnit) extractedItems.push(`price: ${userData.pricePerUnit}`);
+      if (userData.incoterm) extractedItems.push(`Incoterm: ${userData.incoterm}`);
+      if (userData.paymentMethod) extractedItems.push(`payment method: ${userData.paymentMethod}`);
+      if (userData.packaging) extractedItems.push(`packaging: ${userData.packaging}`);
+      if (userData.offerValidity) extractedItems.push(`offer validity: ${userData.offerValidity}`);
       
       response += extractedItems.join(', ') + ". ";
       
       if (missingFields.length > 0) {
         response += `\n\nTo complete your registration, I need some additional information: ${missingFields.slice(0, 2).join(' and ')}. `;
         
-        if (missingFields.includes('certifications (FDA, ISO, etc.)')) {
-          response += "Do you have certifications such as FDA, ISO 22000 or others? ";
-        } else if (missingFields.includes('production capacity')) {
-          response += "What is your monthly production capacity? ";
+        if (missingFields.includes('available certifications (HACCP, ISO, FDA, etc.)')) {
+          response += "What certifications do you have (HACCP, BRC, ISO, FDA, Halal, Kosher, etc.)? ";
+        } else if (missingFields.includes('SIF registration number')) {
+          response += "What is your SIF (Federal Inspection Service) registration number? ";
+        } else if (missingFields.includes('Incoterm (FOB, CIF, etc.)')) {
+          response += "What Incoterm do you prefer (FOB, CIF, CFR, DDP, etc.)? ";
+        } else if (missingFields.includes('payment method')) {
+          response += "What payment methods do you accept (bank transfer, letter of credit, etc.)? ";
         }
       } else {
         response += "\n\n🎉 Registration almost complete! I just need to confirm a few final details.";
@@ -224,7 +331,7 @@ export default function SupplierRegistration() {
       const newSupplierData = { ...supplierData, ...extractedData };
       
       // Calculate completeness
-      const totalFields = 10; // cnpj, address, phone, email, certifications, capacity, technicalDatasheet, productTypes, minimumOrderQuantity, deliveryLocation
+      const totalFields = 21; // All required fields including new ones
       let filledFields = 0;
       if (newSupplierData.cnpj) filledFields++;
       if (newSupplierData.address) filledFields++;
@@ -236,6 +343,17 @@ export default function SupplierRegistration() {
       if (newSupplierData.productTypes?.length) filledFields++;
       if (newSupplierData.minimumOrderQuantity) filledFields++;
       if (newSupplierData.deliveryLocation) filledFields++;
+      if (newSupplierData.sifRegistration) filledFields++;
+      if (newSupplierData.contactPerson) filledFields++;
+      if (newSupplierData.availableCertifications?.length) filledFields++;
+      if (newSupplierData.availableQuantity) filledFields++;
+      if (newSupplierData.pricePerUnit) filledFields++;
+      if (newSupplierData.incoterm) filledFields++;
+      if (newSupplierData.paymentMethod) filledFields++;
+      if (newSupplierData.shippingDetails) filledFields++;
+      if (newSupplierData.packaging) filledFields++;
+      if (newSupplierData.offerValidity) filledFields++;
+      if (newSupplierData.additionalComments) filledFields++;
       
       newSupplierData.completeness = Math.round((filledFields / totalFields) * 100);
       
@@ -311,53 +429,98 @@ export default function SupplierRegistration() {
                 </div>
                 
                 <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${supplierData.sifRegistration ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">SIF Registration</span>
+                  {supplierData.sifRegistration && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${supplierData.contactPerson ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Contact Person</span>
+                  {supplierData.contactPerson && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+                
+                <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${supplierData.products?.length ? 'bg-primary' : 'bg-muted'}`} />
                   <span className="text-sm">Products</span>
                   {supplierData.products?.length && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${supplierData.address ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Location</span>
-                  {supplierData.address && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                  <div className={`w-2 h-2 rounded-full ${supplierData.availableCertifications?.length ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Certifications</span>
+                  {supplierData.availableCertifications?.length && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${supplierData.technicalDatasheet ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Technical Datasheet</span>
-                  {supplierData.technicalDatasheet && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                  <div className={`w-2 h-2 rounded-full ${supplierData.availableQuantity ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Available Quantity</span>
+                  {supplierData.availableQuantity && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${supplierData.productTypes?.length ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Product Types</span>
-                  {supplierData.productTypes?.length && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                  <div className={`w-2 h-2 rounded-full ${supplierData.pricePerUnit ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Price per Unit</span>
+                  {supplierData.pricePerUnit && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${supplierData.minimumOrderQuantity ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Min. Quantity</span>
-                  {supplierData.minimumOrderQuantity && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                  <div className={`w-2 h-2 rounded-full ${supplierData.incoterm ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Incoterm</span>
+                  {supplierData.incoterm && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${supplierData.deliveryTime ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Delivery Time</span>
-                  {supplierData.deliveryTime && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                  <div className={`w-2 h-2 rounded-full ${supplierData.paymentMethod ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Payment Method</span>
+                  {supplierData.paymentMethod && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${supplierData.shippingDetails ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Shipping Details</span>
+                  {supplierData.shippingDetails && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${supplierData.packaging ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Packaging</span>
+                  {supplierData.packaging && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${supplierData.offerValidity ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Offer Validity</span>
+                  {supplierData.offerValidity && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
               </div>
 
-              {(supplierData.cnpj || supplierData.address || supplierData.technicalDatasheet || 
+              {(supplierData.cnpj || supplierData.sifRegistration || supplierData.contactPerson || 
+                supplierData.address || supplierData.technicalDatasheet || 
                 supplierData.minimumOrderQuantity || supplierData.deliveryTime || 
-                supplierData.products?.length || supplierData.productTypes?.length) && (
+                supplierData.products?.length || supplierData.productTypes?.length ||
+                supplierData.availableCertifications?.length || supplierData.availableQuantity ||
+                supplierData.pricePerUnit || supplierData.incoterm || supplierData.paymentMethod ||
+                supplierData.shippingDetails || supplierData.packaging || supplierData.offerValidity ||
+                supplierData.additionalComments) && (
                 <div className="mt-6 pt-4 border-t border-border">
                   <h4 className="font-medium mb-2">Collected Data:</h4>
                   <div className="space-y-2 text-sm">
-                    {supplierData.cnpj && <div><strong>Registration:</strong> {supplierData.cnpj}</div>}
+                    {supplierData.cnpj && <div><strong>CNPJ:</strong> {supplierData.cnpj}</div>}
+                    {supplierData.sifRegistration && <div><strong>SIF Registration:</strong> {supplierData.sifRegistration}</div>}
+                    {supplierData.contactPerson && <div><strong>Contact Person:</strong> {supplierData.contactPerson}</div>}
                     {supplierData.address && <div><strong>Location:</strong> {supplierData.address}</div>}
+                    {supplierData.availableQuantity && <div><strong>Available Quantity:</strong> {supplierData.availableQuantity}</div>}
+                    {supplierData.pricePerUnit && <div><strong>Price per Unit:</strong> {supplierData.pricePerUnit}</div>}
+                    {supplierData.incoterm && <div><strong>Incoterm:</strong> {supplierData.incoterm}</div>}
+                    {supplierData.paymentMethod && <div><strong>Payment Method:</strong> {supplierData.paymentMethod}</div>}
+                    {supplierData.packaging && <div><strong>Packaging:</strong> {supplierData.packaging}</div>}
+                    {supplierData.offerValidity && <div><strong>Offer Validity:</strong> {supplierData.offerValidity}</div>}
                     {supplierData.technicalDatasheet && <div><strong>Technical Datasheet:</strong> {supplierData.technicalDatasheet}</div>}
                     {supplierData.minimumOrderQuantity && <div><strong>Min. Quantity:</strong> {supplierData.minimumOrderQuantity}</div>}
                     {supplierData.deliveryTime && <div><strong>Delivery Time:</strong> {supplierData.deliveryTime}</div>}
+                    {supplierData.shippingDetails && <div><strong>Shipping Details:</strong> {supplierData.shippingDetails}</div>}
+                    {supplierData.additionalComments && <div><strong>Additional Comments:</strong> {supplierData.additionalComments}</div>}
                     {supplierData.products?.length && (
                       <div>
                         <strong>Products:</strong>
