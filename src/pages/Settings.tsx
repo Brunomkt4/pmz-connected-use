@@ -138,7 +138,6 @@ export default function Settings() {
           full_name: profile.full_name || "",
           email: profile.email || "",
           phone: profile.phone || "",
-          company_id: profile.company_id || "",
         });
 
         preferencesForm.reset({

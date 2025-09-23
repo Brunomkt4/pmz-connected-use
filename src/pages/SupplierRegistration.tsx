@@ -83,20 +83,6 @@ export default function SupplierRegistration() {
 
   const analyzeMessage = (message: string): Partial<SupplierData> => {
     const extracted: Partial<SupplierData> = {};
-    
-    // Extract company name (basic pattern)
-    const companyPatterns = [
-      /(?:company|corporation|ltd|llc|inc|corp)\s+([^.,\n]+)/i,
-      /^([A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÇA-Z][a-záéíóúâêîôûàèìòùça-z\s&]+)(?:\s+ltd|llc|inc|corp)?/i
-    ];
-    
-    for (const pattern of companyPatterns) {
-      const match = message.match(pattern);
-      if (match) {
-        extracted.companyName = match[1]?.trim();
-        break;
-      }
-    }
 
     // Extract CNPJ
     const cnpjMatch = message.match(/(\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2})/);
@@ -153,10 +139,6 @@ export default function SupplierRegistration() {
 
   const generateAIResponse = (userData: Partial<SupplierData>, currentData: SupplierData): string => {
     const missingFields = [];
-    
-    if (!currentData.companyName && !userData.companyName) {
-      missingFields.push('company name');
-    }
     if (!currentData.cnpj && !userData.cnpj) {
       missingFields.push('registration number');
     }
@@ -193,7 +175,6 @@ export default function SupplierRegistration() {
       let response = "Perfect! I was able to identify ";
       const extractedItems = [];
       
-      if (userData.companyName) extractedItems.push(`company name: ${userData.companyName}`);
       if (userData.cnpj) extractedItems.push(`registration: ${userData.cnpj}`);
       if (userData.products) extractedItems.push(`products: ${userData.products.join(', ')}`);
       if (userData.address) extractedItems.push(`location: ${userData.address}`);
@@ -243,9 +224,8 @@ export default function SupplierRegistration() {
       const newSupplierData = { ...supplierData, ...extractedData };
       
       // Calculate completeness
-      const totalFields = 11; // companyName, cnpj, address, phone, email, certifications, capacity, technicalDatasheet, productTypes, minimumOrderQuantity, deliveryLocation
+      const totalFields = 10; // cnpj, address, phone, email, certifications, capacity, technicalDatasheet, productTypes, minimumOrderQuantity, deliveryLocation
       let filledFields = 0;
-      if (newSupplierData.companyName) filledFields++;
       if (newSupplierData.cnpj) filledFields++;
       if (newSupplierData.address) filledFields++;
       if (newSupplierData.phone) filledFields++;
@@ -325,12 +305,6 @@ export default function SupplierRegistration() {
 
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${supplierData.companyName ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Company Name</span>
-                  {supplierData.companyName && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
-                </div>
-                
-                <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${supplierData.cnpj ? 'bg-primary' : 'bg-muted'}`} />
                   <span className="text-sm">CNPJ</span>
                   {supplierData.cnpj && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
@@ -373,11 +347,12 @@ export default function SupplierRegistration() {
                 </div>
               </div>
 
-              {supplierData.companyName && (
+              {(supplierData.cnpj || supplierData.address || supplierData.technicalDatasheet || 
+                supplierData.minimumOrderQuantity || supplierData.deliveryTime || 
+                supplierData.products?.length || supplierData.productTypes?.length) && (
                 <div className="mt-6 pt-4 border-t border-border">
                   <h4 className="font-medium mb-2">Collected Data:</h4>
                   <div className="space-y-2 text-sm">
-                    <div><strong>Company:</strong> {supplierData.companyName}</div>
                     {supplierData.cnpj && <div><strong>Registration:</strong> {supplierData.cnpj}</div>}
                     {supplierData.address && <div><strong>Location:</strong> {supplierData.address}</div>}
                     {supplierData.technicalDatasheet && <div><strong>Technical Datasheet:</strong> {supplierData.technicalDatasheet}</div>}
