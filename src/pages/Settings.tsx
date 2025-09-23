@@ -20,7 +20,6 @@ const profileSchema = z.object({
   full_name: z.string().min(2, "Full name must be at least 2 characters").optional().or(z.literal("")),
   email: z.string().email("Invalid email address").optional().or(z.literal("")),
   phone: z.string().min(10, "Phone number must be at least 10 digits").optional().or(z.literal("")),
-  company_id: z.string().optional(),
 });
 
 const preferencesSchema = z.object({
@@ -37,6 +36,14 @@ interface Company {
   id: string;
   name: string;
   account_type_id: number;
+}
+
+interface UserCompany {
+  id: string;
+  user_id: string;
+  company_id: string;
+  role: string;
+  company: Company;
 }
 
 const languages = [
@@ -74,6 +81,7 @@ export default function Settings() {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [userCompanies, setUserCompanies] = useState<UserCompany[]>([]);
 
   const profileForm = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -81,7 +89,6 @@ export default function Settings() {
       full_name: "",
       email: "",
       phone: "",
-      company_id: "",
     },
   });
 
@@ -103,8 +110,8 @@ export default function Settings() {
 
   const loadUserProfile = async () => {
     try {
-      // Load both profile and companies data
-      const [profileResponse, companiesResponse] = await Promise.all([
+      // Load profile, all companies, and user's company relationships
+      const [profileResponse, companiesResponse, userCompaniesResponse] = await Promise.all([
         supabase
           .from("profiles")
           .select("*")
@@ -113,7 +120,14 @@ export default function Settings() {
         supabase
           .from("companies")
           .select("*")
-          .order("name")
+          .order("name"),
+        supabase
+          .from("user_companies")
+          .select(`
+            *,
+            company:companies(*)
+          `)
+          .eq("user_id", user?.id)
       ]);
 
       if (profileResponse.error) {
@@ -130,15 +144,19 @@ export default function Settings() {
         console.error("Error loading companies:", companiesResponse.error);
       }
 
+      if (userCompaniesResponse.error) {
+        console.error("Error loading user companies:", userCompaniesResponse.error);
+      }
+
       const profile = profileResponse.data;
       const companies = companiesResponse.data || [];
+      const userCompanies = userCompaniesResponse.data || [];
 
       if (profile) {
         profileForm.reset({
           full_name: profile.full_name || "",
           email: profile.email || "",
           phone: profile.phone || "",
-          company_id: profile.company_id || "",
         });
 
         preferencesForm.reset({
@@ -150,6 +168,7 @@ export default function Settings() {
       }
 
       setCompanies(companies);
+      setUserCompanies(userCompanies);
     } catch (error) {
       console.error("Error loading profile:", error);
       toast({
@@ -162,6 +181,58 @@ export default function Settings() {
     }
   };
 
+  const addCompany = async (companyId: string, role: string = 'employee') => {
+    try {
+      const { error } = await supabase
+        .from("user_companies")
+        .insert({
+          user_id: user?.id,
+          company_id: companyId,
+          role: role
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Company added successfully",
+      });
+      
+      loadUserProfile(); // Reload data
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add company",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const removeCompany = async (userCompanyId: string) => {
+    try {
+      const { error } = await supabase
+        .from("user_companies")
+        .delete()
+        .eq("id", userCompanyId)
+        .eq("user_id", user?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Company removed successfully",
+      });
+      
+      loadUserProfile(); // Reload data
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to remove company",
+        variant: "destructive",
+      });
+    }
+  };
+
   const onProfileSubmit = async (data: ProfileFormData) => {
     setIsSaving(true);
     try {
@@ -171,7 +242,6 @@ export default function Settings() {
           full_name: data.full_name || null,
           email: data.email || null,
           phone: data.phone || null,
-          company_id: data.company_id || null,
         })
         .eq("user_id", user?.id);
 
@@ -277,7 +347,7 @@ export default function Settings() {
             <CardHeader>
               <CardTitle>Profile Information</CardTitle>
               <CardDescription>
-                Update your personal information. All fields are optional.
+                Update your personal information and manage your company relationships.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -325,31 +395,60 @@ export default function Settings() {
                     )}
                   />
 
-                  <FormField
-                    control={profileForm.control}
-                    name="company_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Company</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a company" />
-                            </SelectTrigger>
-                          </FormControl>
+                  {/* Company Management Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-base font-medium">Companies</Label>
+                    </div>
+                    
+                    {/* Current Companies */}
+                    {userCompanies.length > 0 && (
+                      <div className="space-y-2">
+                        <Label className="text-sm text-muted-foreground">Current Companies:</Label>
+                        {userCompanies.map((userCompany) => (
+                          <div key={userCompany.id} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div>
+                              <span className="font-medium">{userCompany.company.name}</span>
+                              <span className="ml-2 text-sm text-muted-foreground">({userCompany.role})</span>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => removeCompany(userCompany.id)}
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Add New Company */}
+                    <div className="space-y-2">
+                      <Label className="text-sm text-muted-foreground">Add Company:</Label>
+                      <div className="flex gap-2">
+                        <Select onValueChange={(companyId) => {
+                          if (companyId && !userCompanies.find(uc => uc.company_id === companyId)) {
+                            addCompany(companyId);
+                          }
+                        }}>
+                          <SelectTrigger className="flex-1">
+                            <SelectValue placeholder="Select a company to add" />
+                          </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">No company</SelectItem>
-                            {companies.map((company) => (
-                              <SelectItem key={company.id} value={company.id}>
-                                {company.name}
-                              </SelectItem>
-                            ))}
+                            {companies
+                              .filter(company => !userCompanies.find(uc => uc.company_id === company.id))
+                              .map((company) => (
+                                <SelectItem key={company.id} value={company.id}>
+                                  {company.name}
+                                </SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                      </div>
+                    </div>
+                  </div>
 
                   <Button type="submit" disabled={isSaving} className="w-full sm:w-auto">
                     {isSaving ? (
@@ -531,8 +630,9 @@ export default function Settings() {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction 
+                    <AlertDialogAction
                       onClick={handleDeleteAccount}
+                      disabled={isDeleting}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
                       Delete Account

@@ -70,7 +70,6 @@ export type Database = {
       profiles: {
         Row: {
           account_type_id: number
-          company_id: string | null
           country: string | null
           created_at: string
           date_format: string | null
@@ -86,7 +85,6 @@ export type Database = {
         }
         Insert: {
           account_type_id: number
-          company_id?: string | null
           country?: string | null
           created_at?: string
           date_format?: string | null
@@ -102,7 +100,6 @@ export type Database = {
         }
         Update: {
           account_type_id?: number
-          company_id?: string | null
           country?: string | null
           created_at?: string
           date_format?: string | null
@@ -124,8 +121,36 @@ export type Database = {
             referencedRelation: "account_types"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      user_companies: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          role: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          role?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          role?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
           {
-            foreignKeyName: "profiles_company_id_fkey"
+            foreignKeyName: "user_companies_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
