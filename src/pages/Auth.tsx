@@ -50,7 +50,7 @@ const Auth = () => {
   }, []);
 
   // Check if current account type requires company
-  const requiresCompany = accountTypeId ? [1, 3, 4, 5, 6].includes(accountTypeId) : false;
+  const requiresCompany = accountTypeId ? [1, 2, 3, 4, 5, 6].includes(accountTypeId) : false;
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
