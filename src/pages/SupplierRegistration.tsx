@@ -78,21 +78,32 @@ export default function SupplierRegistration() {
     }
 
     try {
-      // First, check if user has a supplier record
-      const { data: suppliers, error: suppliersError } = await supabase
-        .from('suppliers')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      // Save basic company information to companies table
+      const companyData = {
+        name: data.companyName || '',
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        cnpj: data.cnpj,
+        account_type_id: 1, // Supplier account type
+        user_id: user.id
+      };
 
-      if (suppliersError) throw suppliersError;
+      const { error: companyError } = await supabase
+        .from('companies')
+        .upsert(companyData, {
+          onConflict: 'user_id'
+        });
 
+      if (companyError) throw companyError;
+
+      // Save supplier-specific information to suppliers table
       const supplierData = {
         name: data.companyName || '',
-        cnpj: data.cnpj,
-        address: data.address,
-        phone: data.phone,
         email: data.email,
+        phone: data.phone,
+        address: data.address,
+        cnpj: data.cnpj,
         products: data.products,
         product_types: data.productTypes,
         sif_registration: data.sifRegistration,
@@ -109,22 +120,13 @@ export default function SupplierRegistration() {
         user_id: user.id
       };
 
-      if (suppliers) {
-        // Update existing supplier
-        const { error: updateError } = await supabase
-          .from('suppliers')
-          .update(supplierData)
-          .eq('id', suppliers.id);
+      const { error: supplierError } = await supabase
+        .from('suppliers')
+        .upsert(supplierData, {
+          onConflict: 'user_id'
+        });
 
-        if (updateError) throw updateError;
-      } else {
-        // Create new supplier
-        const { error: insertError } = await supabase
-          .from('suppliers')
-          .insert([supplierData]);
-
-        if (insertError) throw insertError;
-      }
+      if (supplierError) throw supplierError;
 
       setIsRegistrationComplete(true);
       toast.success('Supplier registration completed successfully!');
