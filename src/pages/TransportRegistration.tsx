@@ -454,12 +454,6 @@ export default function TransportRegistration() {
 
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${transportData.companyName ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Company Name</span>
-                  {transportData.companyName && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
-                </div>
-                
-                <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${transportData.vehicleTypes?.length ? 'bg-primary' : 'bg-muted'}`} />
                   <span className="text-sm">Vehicle Fleet</span>
                   {transportData.vehicleTypes?.length && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
@@ -523,6 +517,12 @@ export default function TransportRegistration() {
                   <div className={`w-2 h-2 rounded-full ${transportData.trackingSupportDetails ? 'bg-primary' : 'bg-muted'}`} />
                   <span className="text-sm">Tracking & Support</span>
                   {transportData.trackingSupportDetails && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${transportData.specialRequirements ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Special Requirements</span>
+                  {transportData.specialRequirements && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
               </div>
 
