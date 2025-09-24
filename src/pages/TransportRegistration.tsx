@@ -79,7 +79,7 @@ export default function TransportRegistration() {
         email: data.email,
         phone: data.phone,
         address: data.address,
-        account_type_id: 7, // Transport/Carrier account type
+        account_type_id: 4, // Carrier/Transportation Company account type
         user_id: user.id
       };
 
