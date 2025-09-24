@@ -48,7 +48,7 @@ export default function TransportRegistration() {
     {
       id: '1',
       type: 'ai',
-      content: 'Welcome! I\'m your specialized assistant for transport company registration. I need to collect 12 key pieces of information about your transport services: Vehicle Fleet, Service Areas, Transport Capacity, Mode of Transport, Origin & Destination routes, Estimated Transit Time, Shipment Schedule, Freight Cost, Included Services, Documents & Compliance, Tracking & Support, and Special Requirements. Let\'s start with your company name and what types of vehicles you operate.',
+      content: 'Welcome! I\'m your transport registration assistant. I\'ll guide you through collecting the necessary information step by step. Let\'s start with your company name.',
       timestamp: new Date()
     }
   ]);
@@ -317,70 +317,81 @@ export default function TransportRegistration() {
       missingFields.push('special requirements');
     }
 
-      if (Object.keys(userData).length > 0) {
-      let response = "Perfect! I\'ve captured ";
-      const extractedItems = [];
-      
-      if (userData.companyName) extractedItems.push(`company: ${userData.companyName}`);
-      if (userData.vehicleTypes) extractedItems.push(`vehicle fleet: ${userData.vehicleTypes.join(', ')}`);
-      if (userData.serviceAreas) extractedItems.push(`service areas: ${userData.serviceAreas.join(', ')}`);
-      if (userData.capacity) extractedItems.push(`capacity: ${userData.capacity}`);
-      if (userData.modeOfTransport) extractedItems.push(`transport modes: ${userData.modeOfTransport.join(', ')}`);
-      if (userData.originDestinations) extractedItems.push(`routes: ${userData.originDestinations.join(', ')}`);
-      if (userData.estimatedTransitTime) extractedItems.push(`transit time: ${userData.estimatedTransitTime}`);
-      if (userData.shipmentSchedule) extractedItems.push(`schedule: ${userData.shipmentSchedule}`);
-      if (userData.freightCost) extractedItems.push(`freight cost: ${userData.freightCost}`);
-      if (userData.includedServices) extractedItems.push(`services: ${userData.includedServices.join(', ')}`);
-      if (userData.documentsCompliance) extractedItems.push(`compliance: ${userData.documentsCompliance.join(', ')}`);
-      if (userData.trackingSupportDetails) extractedItems.push(`tracking: ${userData.trackingSupportDetails}`);
-      if (userData.specialRequirements) extractedItems.push(`special requirements: ${userData.specialRequirements}`);
-      
-      response += extractedItems.join(', ') + ". ";
+    // If data was extracted, acknowledge it and ask for next item
+    if (Object.keys(userData).length > 0) {
+      let response = "Perfect! I've captured that information. ";
       
       if (missingFields.length > 0) {
-        response += `\n\nNext, I need information about: ${missingFields[0]}. `;
+        response += `\n\nNext, please tell me about your ${missingFields[0]}`;
         
-        if (missingFields[0] === 'vehicle fleet details') {
-          response += "What types of vehicles do you operate? (trucks, trailers, refrigerated, etc.)";
-        } else if (missingFields[0] === 'service areas') {
-          response += "Which geographic areas do you serve? (local, regional, national, international)";
-        } else if (missingFields[0] === 'transport capacity') {
-          response += "What's your transport capacity? (tons, cubic meters, containers, etc.)";
-        } else if (missingFields[0] === 'mode of transport') {
-          response += "What modes of transport do you offer? (road, rail, air, sea)";
-        } else if (missingFields[0] === 'origin & destination routes') {
-          response += "What are your main origin and destination routes?";
-        } else if (missingFields[0] === 'estimated transit time') {
-          response += "What are your typical transit times for deliveries?";
-        } else if (missingFields[0] === 'shipment schedule') {
-          response += "What's your shipment schedule? (daily, weekly, on-demand)";
-        } else if (missingFields[0] === 'freight cost') {
-          response += "What are your freight costs? (per kg, per mile, per container, etc.)";
-        } else if (missingFields[0] === 'included services') {
-          response += "What services are included? (loading, unloading, packaging, insurance, etc.)";
-        } else if (missingFields[0] === 'documents & compliance') {
-          response += "What documents and compliance standards do you handle?";
-        } else if (missingFields[0] === 'tracking & support details') {
-          response += "What tracking and support do you provide? (GPS, real-time updates, customer service)";
-        } else if (missingFields[0] === 'special requirements') {
-          response += "Do you have any special requirements or capabilities? (temperature control, hazmat, oversized cargo, etc.)";
-        } else {
-          response += `Please provide your ${missingFields[0]}.`;
+        // Add specific prompts for each field type
+        switch (missingFields[0]) {
+          case 'company name':
+            response += ".";
+            break;
+          case 'contact phone':
+            response += " number.";
+            break;
+          case 'email address':
+            response += ".";
+            break;
+          case 'vehicle fleet details':
+            response += ". What types of vehicles do you operate?";
+            break;
+          case 'service areas':
+            response += ". Which geographic areas do you serve?";
+            break;
+          case 'transport capacity':
+            response += ". What's your maximum transport capacity?";
+            break;
+          case 'mode of transport':
+            response += ". What modes of transport do you offer? (road, rail, air, sea)";
+            break;
+          case 'origin & destination routes':
+            response += ". What are your main routes?";
+            break;
+          case 'estimated transit time':
+            response += ". What are your typical delivery times?";
+            break;
+          case 'shipment schedule':
+            response += ". How often do you schedule shipments?";
+            break;
+          case 'freight cost':
+            response += ". What are your pricing rates?";
+            break;
+          case 'included services':
+            response += ". What services do you include?";
+            break;
+          case 'documents & compliance':
+            response += ". What compliance standards do you handle?";
+            break;
+          case 'tracking & support details':
+            response += ". What tracking and support do you provide?";
+            break;
+          case 'special requirements':
+            response += ". Do you handle any special cargo types or have special capabilities?";
+            break;
+          default:
+            response += ".";
         }
       } else {
-        response += "\n\n🎉 All transport information collected! Your registration is 100% complete.";
+        response += "\n\n🎉 All information collected! Your registration is 100% complete.";
       }
       
       return response;
     }
 
+    // If no data was extracted, ask for the first missing field
     if (missingFields.length > 0) {
-      if (missingFields[0] === 'company name') {
-        return "Let's start with your transport company name.";
-      } else if (missingFields[0] === 'vehicle fleet details') {
-        return "What types of vehicles do you operate in your fleet?";
-      } else {
-        return `To complete your transport registration, please provide: ${missingFields[0]}.`;
+      switch (missingFields[0]) {
+        case 'company name':
+          return "Let's start with your transport company name.";
+        case 'vehicle fleet details':
+          return "What types of vehicles do you operate in your fleet?";
+        case 'service areas':
+          return "Which geographic areas do you serve?";
+        default:
+          return `Please provide your ${missingFields[0]}.`;
       }
     }
 
