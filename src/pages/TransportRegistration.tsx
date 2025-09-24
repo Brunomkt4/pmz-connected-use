@@ -262,6 +262,22 @@ export default function TransportRegistration() {
       extracted.documentsCompliance = foundDocs;
     }
 
+    // Extract tracking & support details
+    const trackingKeywords = ['gps', 'tracking', 'real-time', 'rastreamento', 'monitoramento', 'support', 'suporte', 'customer service', 'atendimento'];
+    if (trackingKeywords.some(keyword => message.toLowerCase().includes(keyword))) {
+      // Try to extract the full tracking description
+      const trackingMatch = message.match(/(?:tracking|rastreamento|suporte|support|gps|real-time)[\s:]*([^.,\n]+)/i);
+      if (trackingMatch) {
+        extracted.trackingSupportDetails = trackingMatch[0].trim();
+      } else {
+        // Just use the found keywords as tracking details
+        const foundTracking = trackingKeywords.filter(keyword => 
+          message.toLowerCase().includes(keyword)
+        );
+        extracted.trackingSupportDetails = foundTracking.join(', ');
+      }
+    }
+
     // Extract special requirements
     const specialKeywords = ['hazmat', 'oversized', 'fragile', 'perishable', 'valuable', 'time-sensitive', 'expedited'];
     const foundSpecial = specialKeywords.filter(keyword => 
