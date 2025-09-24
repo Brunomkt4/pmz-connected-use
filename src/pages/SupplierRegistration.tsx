@@ -234,16 +234,42 @@ export default function SupplierRegistration() {
       extracted.minimumOrderQuantity = quantityMatch[1];
     }
 
-    // Extract SIF registration
-    const sifMatch = message.match(/(?:sif|federal inspection service)[\s:]*(\d+)/i);
-    if (sifMatch) {
-      extracted.sifRegistration = sifMatch[1];
+    // Extract SIF registration - more flexible pattern
+    const sifPatterns = [
+      // Pattern 1: SIF followed by numbers/text
+      /(?:sif|federal inspection service)[\s:]*([a-zA-Z0-9\-\/]+)/i,
+      // Pattern 2: Just numbers that might be SIF
+      /(?:registration|license)[\s:]*([0-9\-\/]+)/i,
+      // Pattern 3: When user mentions SIF in any context
+      /sif[\s:]*([^\s.,\n]+)/i
+    ];
+    
+    for (const pattern of sifPatterns) {
+      const match = message.match(pattern);
+      if (match) {
+        extracted.sifRegistration = match[1];
+        break;
+      }
     }
 
-    // Extract contact person
-    const contactMatch = message.match(/(?:contact|representative|manager|responsible)[\s:]*([A-Z][a-z]+ [A-Z][a-z]+)/i);
-    if (contactMatch) {
-      extracted.contactPerson = contactMatch[1];
+    // Extract contact person - more flexible pattern
+    const contactPatterns = [
+      // Pattern 1: Contact followed by name
+      /(?:contact|representative|manager|responsible|person)[\s:]*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
+      // Pattern 2: Name after various contact words
+      /(?:my name is|i am|contact me|speak with|talk to)[\s:]*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
+      // Pattern 3: Just capture any proper name mentioned
+      /([A-Z][a-z]+\s+[A-Z][a-z]+)/,
+      // Pattern 4: Names in different formats
+      /(?:mr|mrs|ms|dr)\.?\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i
+    ];
+    
+    for (const pattern of contactPatterns) {
+      const match = message.match(pattern);
+      if (match && match[1].length > 3) { // Ensure it's a reasonable name length
+        extracted.contactPerson = match[1].trim();
+        break;
+      }
     }
 
     // Extract available certifications
@@ -255,16 +281,46 @@ export default function SupplierRegistration() {
       extracted.availableCertifications = foundCerts;
     }
 
-    // Extract available quantity
-    const availableQuantityMatch = message.match(/(?:available|quantity|stock)[\s:]*(\d+[\s\w]*(?:kg|tons?|tonnes?|lbs?))/i);
-    if (availableQuantityMatch) {
-      extracted.availableQuantity = availableQuantityMatch[1];
+    // Extract available quantity - more flexible pattern
+    const quantityPatterns = [
+      // Pattern 1: Numbers with units
+      /(?:available|quantity|stock|have|supply)[\s:]*(\d+(?:,\d+)*(?:\.\d+)?\s*(?:kg|tons?|tonnes?|lbs?|mt|t|kilos?|pounds?))/i,
+      // Pattern 2: Numbers without specific units but with quantity context
+      /(?:available|quantity|stock|have|supply)[\s:]*(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:units?|pieces?|items?)?/i,
+      // Pattern 3: General number mentions with quantity words
+      /(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:kg|tons?|tonnes?|lbs?|mt|t|kilos?|pounds?)\s*(?:available|in stock|ready)/i,
+      // Pattern 4: Flexible quantity mentions
+      /(?:we have|i have|available)[\s:]*(\d+[^\s.,\n]*)/i
+    ];
+    
+    for (const pattern of quantityPatterns) {
+      const match = message.match(pattern);
+      if (match) {
+        extracted.availableQuantity = match[1];
+        break;
+      }
     }
 
-    // Extract price per unit
-    const priceMatch = message.match(/(?:price|cost)[\s:]*(?:\$|R\$|USD|BRL)?[\s]*(\d+(?:[.,]\d+)?(?:\s*(?:per|\/)\s*(?:kg|ton|unit))?)/i);
-    if (priceMatch) {
-      extracted.pricePerUnit = priceMatch[1];
+    // Extract price per unit - more flexible pattern
+    const pricePatterns = [
+      // Pattern 1: Currency symbols with various formats
+      /(?:\$|R\$|US\$|€|£|¥)\s*(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:per|\/|por)\s*(?:kg|ton|tons?|unit|piece|kilo)/i,
+      // Pattern 2: Numbers with currency words
+      /(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:dollars?|reais?|euros?|pounds?|usd|brl|eur|gbp)\s*(?:per|\/|por)\s*(?:kg|ton|tons?|unit|piece|kilo)/i,
+      // Pattern 3: Price mentions without strict format
+      /(?:price|cost|costs?|preço|valor)[\s:]*(?:\$|R\$|US\$|€|£|¥)?\s*(\d+(?:,\d+)*(?:\.\d+)?)/i,
+      // Pattern 4: Per unit pricing
+      /(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:per|\/|each|por)\s*(?:kg|unit|piece|ton|kilo)/i,
+      // Pattern 5: General price format
+      /(?:\$|price)[\s:]*(\d+(?:[.,]\d+)?)/i
+    ];
+    
+    for (const pattern of pricePatterns) {
+      const match = message.match(pattern);
+      if (match) {
+        extracted.pricePerUnit = match[0]; // Use the full match for context
+        break;
+      }
     }
 
     // Extract Incoterm
