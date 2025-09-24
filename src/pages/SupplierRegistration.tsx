@@ -53,7 +53,7 @@ export default function SupplierRegistration() {
     {
       id: '1',
       type: 'ai',
-      content: 'Hello! I am your intelligent assistant for supplier registration. I will help you register your company quickly and efficiently. To get started, tell me a bit about your company - name, products you offer, where it is located...',
+      content: 'Welcome! I\'m your supplier registration assistant. I\'ll guide you through collecting the necessary information step by step. Let\'s start with your company name.',
       timestamp: new Date()
     }
   ]);
@@ -120,11 +120,27 @@ export default function SupplierRegistration() {
         user_id: user.id
       };
 
-      const { error: supplierError } = await supabase
+      // Check for existing supplier and handle upsert manually
+      const { data: existingSupplier, error: existsErr } = await supabase
         .from('suppliers')
-        .upsert(supplierData, {
-          onConflict: 'user_id'
-        });
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (existsErr) throw existsErr;
+
+      let supplierError = null as unknown as { message?: string } | null;
+      if (existingSupplier?.id) {
+        const { error } = await supabase
+          .from('suppliers')
+          .update(supplierData)
+          .eq('id', existingSupplier.id);
+        supplierError = error;
+      } else {
+        const { error } = await supabase
+          .from('suppliers')
+          .insert(supplierData);
+        supplierError = error;
+      }
 
       if (supplierError) throw supplierError;
 
@@ -165,7 +181,19 @@ export default function SupplierRegistration() {
   const analyzeMessage = (message: string): Partial<SupplierData> => {
     const extracted: Partial<SupplierData> = {};
 
-    // Extract CNPJ
+    // Extract company name
+    const companyPatterns = [
+      /(?:company|corporation|corp|inc|ltd|business)\s+([^.,\n]+)/i,
+      /^([A-Z][a-zA-Z\s&]+)(?:\s+(?:company|corporation|corp|inc|ltd))?/i
+    ];
+    
+    for (const pattern of companyPatterns) {
+      const match = message.match(pattern);
+      if (match) {
+        extracted.companyName = match[1]?.trim();
+        break;
+      }
+    }
     const cnpjMatch = message.match(/(\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2})/);
     if (cnpjMatch) {
       extracted.cnpj = cnpjMatch[1];
@@ -266,9 +294,20 @@ export default function SupplierRegistration() {
       extracted.offerValidity = validityMatch[1];
     }
 
-    // Extract shipping details
-    if (message.toLowerCase().includes('shipping') || message.toLowerCase().includes('freight')) {
-      extracted.shippingDetails = 'Mentioned';
+    // Extract shipping details - more flexible pattern
+    const shippingKeywords = ['shipping', 'freight', 'transport', 'delivery', 'logistics'];
+    if (shippingKeywords.some(keyword => message.toLowerCase().includes(keyword))) {
+      // Try to extract the full shipping description
+      const shippingMatch = message.match(/(?:shipping|freight|transport|delivery|logistics)[\s:]*([^.,\n]+)/i);
+      if (shippingMatch) {
+        extracted.shippingDetails = shippingMatch[0].trim();
+      } else {
+        // Just use the found keywords as shipping details
+        const foundShipping = shippingKeywords.filter(keyword => 
+          message.toLowerCase().includes(keyword)
+        );
+        extracted.shippingDetails = foundShipping.join(', ');
+      }
     }
 
     // Extract additional comments
@@ -291,21 +330,26 @@ export default function SupplierRegistration() {
   const generateAIResponse = (userData: Partial<SupplierData>, currentData: SupplierData): string => {
     const missingFields = [];
     
-    // Check all required fields
+    // Basic company info (only company name required)
+    if (!currentData.companyName && !userData.companyName) {
+      missingFields.push('company name');
+    }
+    
+    // 12 required supplier fields
     if (!currentData.cnpj && !userData.cnpj) {
-      missingFields.push('CNPJ registration number');
+      missingFields.push('CNPJ (Corporate Tax ID)');
     }
     if (!currentData.sifRegistration && !userData.sifRegistration) {
-      missingFields.push('SIF registration number');
+      missingFields.push('SIF registration');
     }
     if (!currentData.contactPerson && !userData.contactPerson) {
-      missingFields.push('contact person name');
+      missingFields.push('contact person');
     }
-    if (!currentData.address && !userData.address) {
-      missingFields.push('company address');
+    if (!currentData.products?.length && !userData.products?.length) {
+      missingFields.push('products');
     }
     if (!currentData.availableCertifications?.length && !userData.availableCertifications?.length) {
-      missingFields.push('available certifications (HACCP, ISO, FDA, etc.)');
+      missingFields.push('certifications');
     }
     if (!currentData.availableQuantity && !userData.availableQuantity) {
       missingFields.push('available quantity');
@@ -314,7 +358,7 @@ export default function SupplierRegistration() {
       missingFields.push('price per unit');
     }
     if (!currentData.incoterm && !userData.incoterm) {
-      missingFields.push('Incoterm (FOB, CIF, etc.)');
+      missingFields.push('incoterm');
     }
     if (!currentData.paymentMethod && !userData.paymentMethod) {
       missingFields.push('payment method');
@@ -323,59 +367,85 @@ export default function SupplierRegistration() {
       missingFields.push('shipping details');
     }
     if (!currentData.packaging && !userData.packaging) {
-      missingFields.push('packaging information');
+      missingFields.push('packaging');
     }
     if (!currentData.offerValidity && !userData.offerValidity) {
-      missingFields.push('offer validity period');
-    }
-    if (!currentData.phone) {
-      missingFields.push('phone number');
-    }
-    if (!currentData.email) {
-      missingFields.push('email address');
+      missingFields.push('offer validity');
     }
 
-    // If we extracted new data
+    // If data was extracted, acknowledge it and ask for next item
     if (Object.keys(userData).length > 0) {
-      let response = "Perfect! I was able to identify ";
-      const extractedItems = [];
-      
-      if (userData.cnpj) extractedItems.push(`CNPJ: ${userData.cnpj}`);
-      if (userData.sifRegistration) extractedItems.push(`SIF registration: ${userData.sifRegistration}`);
-      if (userData.contactPerson) extractedItems.push(`contact person: ${userData.contactPerson}`);
-      if (userData.products) extractedItems.push(`products: ${userData.products.join(', ')}`);
-      if (userData.address) extractedItems.push(`location: ${userData.address}`);
-      if (userData.availableQuantity) extractedItems.push(`available quantity: ${userData.availableQuantity}`);
-      if (userData.pricePerUnit) extractedItems.push(`price: ${userData.pricePerUnit}`);
-      if (userData.incoterm) extractedItems.push(`Incoterm: ${userData.incoterm}`);
-      if (userData.paymentMethod) extractedItems.push(`payment method: ${userData.paymentMethod}`);
-      if (userData.packaging) extractedItems.push(`packaging: ${userData.packaging}`);
-      if (userData.offerValidity) extractedItems.push(`offer validity: ${userData.offerValidity}`);
-      
-      response += extractedItems.join(', ') + ". ";
+      let response = "Perfect! I've captured that information. ";
       
       if (missingFields.length > 0) {
-        response += `\n\nTo complete your registration, I need some additional information: ${missingFields.slice(0, 2).join(' and ')}. `;
+        response += `\n\nNext, please tell me about your ${missingFields[0]}`;
         
-        if (missingFields.includes('available certifications (HACCP, ISO, FDA, etc.)')) {
-          response += "What certifications do you have (HACCP, BRC, ISO, FDA, Halal, Kosher, etc.)? ";
-        } else if (missingFields.includes('SIF registration number')) {
-          response += "What is your SIF (Federal Inspection Service) registration number? ";
-        } else if (missingFields.includes('Incoterm (FOB, CIF, etc.)')) {
-          response += "What Incoterm do you prefer (FOB, CIF, CFR, DDP, etc.)? ";
-        } else if (missingFields.includes('payment method')) {
-          response += "What payment methods do you accept (bank transfer, letter of credit, etc.)? ";
+        // Add specific prompts for each field type
+        switch (missingFields[0]) {
+          case 'company name':
+            response += ".";
+            break;
+          case 'CNPJ (Corporate Tax ID)':
+            response += ". What is your CNPJ number?";
+            break;
+          case 'SIF registration':
+            response += ". What is your SIF registration number?";
+            break;
+          case 'contact person':
+            response += ". Who is the main contact person for your company?";
+            break;
+          case 'products':
+            response += ". What products do you supply?";
+            break;
+          case 'certifications':
+            response += ". What certifications do you have? (HACCP, ISO, FDA, etc.)";
+            break;
+          case 'available quantity':
+            response += ". What quantities are currently available?";
+            break;
+          case 'price per unit':
+            response += ". What are your prices per unit?";
+            break;
+          case 'incoterm':
+            response += ". What incoterm do you prefer? (FOB, CIF, CFR, etc.)";
+            break;
+          case 'payment method':
+            response += ". What payment methods do you accept?";
+            break;
+          case 'shipping details':
+            response += ". What are your shipping arrangements?";
+            break;
+          case 'packaging':
+            response += ". How do you package your products?";
+            break;
+          case 'offer validity':
+            response += ". How long are your offers valid?";
+            break;
+          default:
+            response += ".";
         }
       } else {
-        response += "\n\n🎉 Registration almost complete! I just need to confirm a few final details.";
+        response += "\n\n🎉 All information collected! Your registration is 100% complete.";
       }
       
       return response;
     }
 
-    if (missingFields.length === 0) {
-      return "🎉 Perfect! All required information has been collected. Your registration is being processed and will be saved to our database.";
+    // If no data was extracted, ask for the first missing field
+    if (missingFields.length > 0) {
+      switch (missingFields[0]) {
+        case 'company name':
+          return "Let's start with your company name.";
+        case 'CNPJ (Corporate Tax ID)':
+          return "What is your CNPJ (Corporate Tax ID) number?";
+        case 'products':
+          return "What products do you supply?";
+        default:
+          return `Please provide your ${missingFields[0]}.`;
+      }
     }
+
+    return "🎉 Excellent! All supplier information collected. Your registration is now 100% complete!";
   };
 
   const sendMessage = async () => {
@@ -397,21 +467,16 @@ export default function SupplierRegistration() {
       const extractedData = analyzeMessage(currentMessage);
       const newSupplierData = { ...supplierData, ...extractedData };
       
-      // Calculate completeness
-      const totalFields = 21; // All required fields including new ones
+      // Calculate completeness - 13 required fields (1 basic + 12 supplier fields)
+      const totalFields = 13;
       let filledFields = 0;
+      // Basic info (1 field)
+      if (newSupplierData.companyName) filledFields++;
+      // 12 supplier fields
       if (newSupplierData.cnpj) filledFields++;
-      if (newSupplierData.address) filledFields++;
-      if (newSupplierData.phone) filledFields++;
-      if (newSupplierData.email) filledFields++;
-      if (newSupplierData.certifications?.length) filledFields++;
-      if (newSupplierData.capacity) filledFields++;
-      if (newSupplierData.technicalDatasheet) filledFields++;
-      if (newSupplierData.productTypes?.length) filledFields++;
-      if (newSupplierData.minimumOrderQuantity) filledFields++;
-      if (newSupplierData.deliveryLocation) filledFields++;
       if (newSupplierData.sifRegistration) filledFields++;
       if (newSupplierData.contactPerson) filledFields++;
+      if (newSupplierData.products?.length) filledFields++;
       if (newSupplierData.availableCertifications?.length) filledFields++;
       if (newSupplierData.availableQuantity) filledFields++;
       if (newSupplierData.pricePerUnit) filledFields++;
@@ -420,7 +485,6 @@ export default function SupplierRegistration() {
       if (newSupplierData.shippingDetails) filledFields++;
       if (newSupplierData.packaging) filledFields++;
       if (newSupplierData.offerValidity) filledFields++;
-      if (newSupplierData.additionalComments) filledFields++;
       
       newSupplierData.completeness = Math.round((filledFields / totalFields) * 100);
       
