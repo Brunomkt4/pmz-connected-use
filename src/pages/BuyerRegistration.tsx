@@ -49,7 +49,7 @@ export default function BuyerRegistration() {
     {
       id: '1',
       type: 'ai',
-      content: 'Hello! I\'m your intelligent assistant for buyer registration. I\'ll help you set up your comprehensive purchasing profile efficiently. To get started, tell me about your company, what products you\'re looking to purchase, your requirements, quantities needed, and your location...',
+      content: 'Welcome! I\'m your buyer registration assistant. I\'ll guide you through collecting the necessary information step by step. Let\'s start with your company name.',
       timestamp: new Date()
     }
   ]);
@@ -116,11 +116,27 @@ export default function BuyerRegistration() {
         user_id: user.id
       };
 
-      const { error: buyerError } = await supabase
+      // Check for existing buyer and handle upsert manually
+      const { data: existingBuyer, error: existsErr } = await supabase
         .from('buyers')
-        .upsert(buyerData, {
-          onConflict: 'user_id'
-        });
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (existsErr) throw existsErr;
+
+      let buyerError = null as unknown as { message?: string } | null;
+      if (existingBuyer?.id) {
+        const { error } = await supabase
+          .from('buyers')
+          .update(buyerData)
+          .eq('id', existingBuyer.id);
+        buyerError = error;
+      } else {
+        const { error } = await supabase
+          .from('buyers')
+          .insert(buyerData);
+        buyerError = error;
+      }
 
       if (buyerError) throw buyerError;
 
@@ -137,7 +153,7 @@ export default function BuyerRegistration() {
     
     // Extract company name
     const companyPatterns = [
-      /(?:company|corporation|corp|inc|ltd|llc)\s+([^.,\n]+)/i,
+      /(?:company|corporation|corp|inc|ltd|llc|business)\s+([^.,\n]+)/i,
       /^([A-Z][a-zA-Z\s&]+)(?:\s+(?:company|corp|inc|ltd|llc))?/i
     ];
     
@@ -149,10 +165,24 @@ export default function BuyerRegistration() {
       }
     }
 
-    // Extract contact person
-    const contactMatch = message.match(/(?:contact|representative|manager|responsible)[\s:]*([A-Z][a-z]+ [A-Z][a-z]+)/i);
-    if (contactMatch) {
-      extracted.contactPerson = contactMatch[1];
+    // Extract contact person - more flexible pattern
+    const contactPatterns = [
+      // Pattern 1: Contact followed by name
+      /(?:contact|representative|manager|responsible|person|buyer)[\s:]*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
+      // Pattern 2: Name after various contact words
+      /(?:my name is|i am|contact me|speak with|talk to)[\s:]*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
+      // Pattern 3: Just capture any proper name mentioned
+      /([A-Z][a-z]+\s+[A-Z][a-z]+)/,
+      // Pattern 4: Names in different formats
+      /(?:mr|mrs|ms|dr)\.?\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i
+    ];
+    
+    for (const pattern of contactPatterns) {
+      const match = message.match(pattern);
+      if (match && match[1].length > 3) { // Ensure it's a reasonable name length
+        extracted.contactPerson = match[1].trim();
+        break;
+      }
     }
 
     // Extract products/categories and requirements
@@ -165,10 +195,24 @@ export default function BuyerRegistration() {
       extracted.productRequirements = foundCategories;
     }
 
-    // Extract quantity information
-    const quantityMatch = message.match(/(?:need|require|looking for)[\s\w]*(\d+[\s\w]*(?:tons?|kg|lbs?|pounds?))/i);
-    if (quantityMatch) {
-      extracted.quantityRequired = quantityMatch[1];
+    // Extract quantity information - more flexible pattern
+    const quantityPatterns = [
+      // Pattern 1: Numbers with units
+      /(?:need|require|looking for|want|buy)[\s\w]*(\d+(?:,\d+)*(?:\.\d+)?\s*(?:kg|tons?|tonnes?|lbs?|mt|t|kilos?|pounds?))/i,
+      // Pattern 2: Numbers without specific units but with quantity context
+      /(?:need|require|quantity|volume)[\s:]*(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:units?|pieces?|items?)?/i,
+      // Pattern 3: General number mentions with quantity words
+      /(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:kg|tons?|tonnes?|lbs?|mt|t|kilos?|pounds?)\s*(?:needed|required|per)/i,
+      // Pattern 4: Flexible quantity mentions
+      /(?:quantity|volume|amount)[\s:]*(\d+[^\s.,\n]*)/i
+    ];
+    
+    for (const pattern of quantityPatterns) {
+      const match = message.match(pattern);
+      if (match) {
+        extracted.quantityRequired = match[1];
+        break;
+      }
     }
 
     // Extract volume/budget information
@@ -182,10 +226,24 @@ export default function BuyerRegistration() {
       extracted.budget = budgetMatch[0];
     }
 
-    // Extract target price
-    const priceMatch = message.match(/(?:target price|budget|willing to pay)[\s:]*\$?(\d+(?:[.,]\d+)?(?:\s*(?:per|\/)\s*(?:kg|ton|unit))?)/i);
-    if (priceMatch) {
-      extracted.targetPrice = priceMatch[1];
+    // Extract target price - more flexible pattern
+    const pricePatterns = [
+      // Pattern 1: Currency symbols with various formats
+      /(?:target price|budget|willing to pay|pay up to|price range)[\s:]*(?:\$|R\$|US\$|€|£|¥)?\s*(\d+(?:,\d+)*(?:\.\d+)?)/i,
+      // Pattern 2: Numbers with currency words
+      /(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:dollars?|reais?|euros?|pounds?|usd|brl|eur|gbp)\s*(?:per|\/|each)/i,
+      // Pattern 3: General price mentions
+      /(?:price|budget|cost)[\s:]*(?:\$|R\$|US\$|€|£|¥)?\s*(\d+(?:,\d+)*(?:\.\d+)?)/i,
+      // Pattern 4: Per unit pricing
+      /(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:per|\/)\s*(?:kg|unit|piece|ton|kilo)/i
+    ];
+    
+    for (const pattern of pricePatterns) {
+      const match = message.match(pattern);
+      if (match) {
+        extracted.targetPrice = match[0]; // Use the full match for context
+        break;
+      }
     }
 
     // Extract location/address
@@ -215,33 +273,37 @@ export default function BuyerRegistration() {
       extracted.preferredPaymentMethod = foundPayment;
     }
 
-    // Extract financing needs
-    if (message.toLowerCase().includes('financing') || message.toLowerCase().includes('credit') || message.toLowerCase().includes('loan')) {
-      extracted.financingNeeds = 'Required';
+    // Extract financing needs - more flexible pattern
+    const financingKeywords = ['financing', 'credit', 'loan', 'payment terms', 'extended payment', 'installments'];
+    if (financingKeywords.some(keyword => message.toLowerCase().includes(keyword))) {
+      const financingMatch = message.match(/(?:financing|credit|loan|payment)[\s:]*([^.,\n]+)/i);
+      if (financingMatch) {
+        extracted.financingNeeds = financingMatch[0].trim();
+      } else {
+        extracted.financingNeeds = 'Required';
+      }
     }
 
-    // Extract certifications
-    const certKeywords = ['haccp', 'brc', 'iso', 'fda', 'halal', 'kosher', 'organic', 'gmp', 'ssop'];
-    const foundCerts = certKeywords.filter(cert => 
-      message.toLowerCase().includes(cert)
-    );
-    if (foundCerts.length > 0) {
-      extracted.certificationRequirements = foundCerts;
+    // Extract bank guarantee/L/C details - more flexible pattern  
+    const bankKeywords = ['bank guarantee', 'letter of credit', 'l/c', 'guarantee', 'documentary credit'];
+    const foundBank = bankKeywords.find(keyword => message.toLowerCase().includes(keyword));
+    if (foundBank) {
+      if (foundBank.includes('guarantee')) {
+        extracted.bankGuaranteeDetails = 'Required';
+      } else {
+        extracted.letterOfCreditDetails = 'Required';
+      }
     }
 
-    // Extract insurance requirements
-    if (message.toLowerCase().includes('insurance') || message.toLowerCase().includes('coverage')) {
-      extracted.insuranceRequirements = 'Required';
-    }
-
-    // Extract bank guarantee details
-    if (message.toLowerCase().includes('bank guarantee') || message.toLowerCase().includes('guarantee')) {
-      extracted.bankGuaranteeDetails = 'Required';
-    }
-
-    // Extract letter of credit details
-    if (message.toLowerCase().includes('letter of credit') || message.toLowerCase().includes('l/c')) {
-      extracted.letterOfCreditDetails = 'Required';
+    // Extract additional comments - more flexible pattern
+    const commentKeywords = ['comment', 'note', 'additional', 'special', 'requirement', 'important'];
+    if (commentKeywords.some(keyword => message.toLowerCase().includes(keyword))) {
+      const commentMatch = message.match(/(?:comment|note|additional|special|requirement)[\s:]*([^.,\n]+)/i);
+      if (commentMatch) {
+        extracted.additionalComments = commentMatch[0].trim();
+      } else {
+        extracted.additionalComments = 'Provided';
+      }
     }
 
     return extracted;
@@ -250,24 +312,14 @@ export default function BuyerRegistration() {
   const generateAIResponse = (userData: Partial<BuyerData>, currentData: BuyerData): string => {
     const missingFields = [];
     
-    // Check all required fields
+    // Basic company info (only company name required)
     if (!currentData.companyName && !userData.companyName) {
       missingFields.push('company name');
     }
-    if (!currentData.businessNumber) {
-      missingFields.push('business registration number');
-    }
-    if (!currentData.address && !userData.address) {
-      missingFields.push('business address');
-    }
+    
+    // 13 required buyer fields
     if (!currentData.contactPerson && !userData.contactPerson) {
       missingFields.push('contact person');
-    }
-    if (!currentData.phone) {
-      missingFields.push('contact phone');
-    }
-    if (!currentData.email) {
-      missingFields.push('email address');
     }
     if (!currentData.productRequirements?.length && !userData.productRequirements?.length) {
       missingFields.push('product requirements');
@@ -285,54 +337,97 @@ export default function BuyerRegistration() {
       missingFields.push('required delivery date');
     }
     if (!currentData.preferredPaymentMethod && !userData.preferredPaymentMethod) {
-      missingFields.push('preferred payment method');
+      missingFields.push('payment method preference');
+    }
+    if (!currentData.financingNeeds && !userData.financingNeeds) {
+      missingFields.push('financing or credit needs');
+    }
+    if (!currentData.certificationRequirements?.length && !userData.certificationRequirements?.length) {
+      missingFields.push('certification requirements');
+    }
+    if (!currentData.insuranceRequirements && !userData.insuranceRequirements) {
+      missingFields.push('insurance requirements');
+    }
+    if (!currentData.bankGuaranteeDetails && !currentData.letterOfCreditDetails && !userData.bankGuaranteeDetails && !userData.letterOfCreditDetails) {
+      missingFields.push('bank guarantee or L/C details');
+    }
+    if (!currentData.additionalComments && !userData.additionalComments) {
+      missingFields.push('additional comments');
     }
 
-    // If we extracted new data
+    // If data was extracted, acknowledge it and ask for next item
     if (Object.keys(userData).length > 0) {
-      let response = "Excellent! I've identified ";
-      const extractedItems = [];
-      
-      if (userData.companyName) extractedItems.push(`company: ${userData.companyName}`);
-      if (userData.contactPerson) extractedItems.push(`contact person: ${userData.contactPerson}`);
-      if (userData.productRequirements) extractedItems.push(`products: ${userData.productRequirements.join(', ')}`);
-      if (userData.address) extractedItems.push(`location: ${userData.address}`);
-      if (userData.quantityRequired) extractedItems.push(`quantity: ${userData.quantityRequired}`);
-      if (userData.targetPrice) extractedItems.push(`target price: ${userData.targetPrice}`);
-      if (userData.deliveryDestination) extractedItems.push(`delivery destination: ${userData.deliveryDestination}`);
-      if (userData.preferredPaymentMethod) extractedItems.push(`payment method: ${userData.preferredPaymentMethod}`);
-      
-      response += extractedItems.join(', ') + ". ";
+      let response = "Perfect! I've captured that information. ";
       
       if (missingFields.length > 0) {
-        response += `\n\nTo complete your buyer profile, I need: ${missingFields.slice(0, 2).join(' and ')}. `;
+        response += `\n\nNext, please tell me about your ${missingFields[0]}`;
         
-        if (missingFields.includes('product requirements')) {
-          response += "What specific products are you looking to purchase? ";
-        } else if (missingFields.includes('quantity required')) {
-          response += "What quantities do you typically need? ";
-        } else if (missingFields.includes('target price')) {
-          response += "What is your target price range? ";
-        } else if (missingFields.includes('delivery destination')) {
-          response += "Where do you need the products delivered? ";
+        // Add specific prompts for each field type
+        switch (missingFields[0]) {
+          case 'company name':
+            response += ".";
+            break;
+          case 'contact person':
+            response += ". Who is the main contact person for purchasing?";
+            break;
+          case 'product requirements':
+            response += ". What specific products are you looking to purchase?";
+            break;
+          case 'quantity required':
+            response += ". What quantities do you typically need?";
+            break;
+          case 'target price':
+            response += ". What is your target price range?";
+            break;
+          case 'delivery destination':
+            response += ". Where do you need the products delivered?";
+            break;
+          case 'required delivery date':
+            response += ". When do you need delivery?";
+            break;
+          case 'payment method preference':
+            response += ". What payment methods do you prefer?";
+            break;
+          case 'financing or credit needs':
+            response += ". Do you need financing or credit arrangements?";
+            break;
+          case 'certification requirements':
+            response += ". What certifications do you require? (HACCP, ISO, etc.)";
+            break;
+          case 'insurance requirements':
+            response += ". Do you have any insurance requirements?";
+            break;
+          case 'bank guarantee or L/C details':
+            response += ". Do you need bank guarantee or letter of credit arrangements?";
+            break;
+          case 'additional comments':
+            response += ". Do you have any additional comments or special requirements?";
+            break;
+          default:
+            response += ".";
         }
       } else {
-        response += "\n\n🎉 Registration almost complete! I just need to confirm a few final details.";
+        response += "\n\n🎉 All information collected! Your registration is 100% complete.";
       }
       
       return response;
     }
 
-    if (missingFields.length === 0) {
-      return "🎉 Perfect! All required information has been collected. Your buyer registration is being processed and will be saved to our database.";
-    }
-
-    // No new data extracted
+    // If no data was extracted, ask for the first missing field
     if (missingFields.length > 0) {
-      return `I understand! I'll need some additional information to complete the registration. Could you please provide your ${missingFields[0]}?`;
+      switch (missingFields[0]) {
+        case 'company name':
+          return "Let's start with your company name.";
+        case 'contact person':
+          return "Who is the main contact person for purchasing?";
+        case 'product requirements':
+          return "What specific products are you looking to purchase?";
+        default:
+          return `Please provide your ${missingFields[0]}.`;
+      }
     }
 
-    return "Perfect! All main information has been collected. I'll process your buyer registration.";
+    return "🎉 Excellent! All buyer information collected. Your registration is now 100% complete!";
   };
 
   const sendMessage = async () => {
@@ -353,25 +448,24 @@ export default function BuyerRegistration() {
       const extractedData = analyzeMessage(currentMessage);
       const newBuyerData = { ...buyerData, ...extractedData };
       
-      // Calculate completeness - all 16 main fields
-      const totalFields = 16;
+      // Calculate completeness - 14 required fields (1 basic + 13 buyer fields)
+      const totalFields = 14;
       let filledFields = 0;
+      // Basic info (1 field)
       if (newBuyerData.companyName) filledFields++;
-      if (newBuyerData.businessNumber) filledFields++;
-      if (newBuyerData.address) filledFields++;
+      // 13 buyer fields
       if (newBuyerData.contactPerson) filledFields++;
-      if (newBuyerData.phone) filledFields++;
-      if (newBuyerData.email) filledFields++;
       if (newBuyerData.productRequirements?.length) filledFields++;
       if (newBuyerData.quantityRequired) filledFields++;
       if (newBuyerData.targetPrice) filledFields++;
       if (newBuyerData.deliveryDestination) filledFields++;
-      if (newBuyerData.deliveryConditions) filledFields++;
       if (newBuyerData.requiredDeliveryDate) filledFields++;
       if (newBuyerData.preferredPaymentMethod) filledFields++;
       if (newBuyerData.financingNeeds) filledFields++;
       if (newBuyerData.certificationRequirements?.length) filledFields++;
       if (newBuyerData.insuranceRequirements) filledFields++;
+      if (newBuyerData.bankGuaranteeDetails || newBuyerData.letterOfCreditDetails) filledFields++;
+      if (newBuyerData.additionalComments) filledFields++;
       
       newBuyerData.completeness = Math.round((filledFields / totalFields) * 100);
       setBuyerData(newBuyerData);
