@@ -197,20 +197,16 @@ export default function BuyerRegistration() {
 
     // Extract quantity information - more flexible pattern
     const quantityPatterns = [
-      // Pattern 1: Numbers with units
-      /(?:need|require|looking for|want|buy)[\s\w]*(\d+(?:,\d+)*(?:\.\d+)?\s*(?:kg|tons?|tonnes?|lbs?|mt|t|kilos?|pounds?))/i,
-      // Pattern 2: Numbers without specific units but with quantity context
-      /(?:need|require|quantity|volume)[\s:]*(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:units?|pieces?|items?)?/i,
-      // Pattern 3: General number mentions with quantity words
-      /(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:kg|tons?|tonnes?|lbs?|mt|t|kilos?|pounds?)\s*(?:needed|required|per)/i,
-      // Pattern 4: Flexible quantity mentions
-      /(?:quantity|volume|amount)[\s:]*(\d+[^\s.,\n]*)/i
+      /(?:need|require|want|buy|looking for|quantity|volume)[\s\w]*(\d+(?:,\d+)*(?:\.\d+)?\s*(?:kg|tons?|tonnes?|lbs?|mt|t|kilos?|pounds?|units?|pieces?|containers?|pallets?))/i,
+      /(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:kg|tons?|tonnes?|lbs?|mt|t|kilos?|pounds?|units?|pieces?|containers?|pallets?)\s*(?:per|\/|needed|required|monthly|annually|weekly)?/i,
+      /(?:quantity|volume|amount)[\s:]*(\d+(?:,\d+)*(?:\.\d+)?(?:\s*(?:kg|tons?|tonnes?|lbs?|mt|t|kilos?|pounds?|units?|pieces?))?)/i,
+      /(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:each|per|\/)\s*(?:month|year|week|day)/i
     ];
     
     for (const pattern of quantityPatterns) {
       const match = message.match(pattern);
       if (match) {
-        extracted.quantityRequired = match[1];
+        extracted.quantityRequired = match[0].trim(); // Use full match for better context
         break;
       }
     }
@@ -292,6 +288,39 @@ export default function BuyerRegistration() {
         extracted.bankGuaranteeDetails = 'Required';
       } else {
         extracted.letterOfCreditDetails = 'Required';
+      }
+    }
+
+    // Extract certification requirements - more flexible pattern
+    const certificationKeywords = ['haccp', 'iso', 'brc', 'sqs', 'halal', 'kosher', 'organic', 'certification', 'certified', 'certificate'];
+    const foundCertifications = [];
+    
+    for (const cert of certificationKeywords) {
+      if (message.toLowerCase().includes(cert)) {
+        foundCertifications.push(cert.toUpperCase());
+      }
+    }
+    
+    if (foundCertifications.length > 0) {
+      extracted.certificationRequirements = foundCertifications;
+    } else if (message.toLowerCase().includes('certification') || message.toLowerCase().includes('certified')) {
+      // General certification mention
+      const certMatch = message.match(/(?:certification|certified|certificate)[\s:]*([^.,\n]+)/i);
+      if (certMatch) {
+        extracted.certificationRequirements = [certMatch[1].trim()];
+      } else {
+        extracted.certificationRequirements = ['Required'];
+      }
+    }
+
+    // Extract insurance requirements - more flexible pattern
+    const insuranceKeywords = ['insurance', 'insured', 'coverage', 'liability', 'cargo insurance', 'product liability'];
+    if (insuranceKeywords.some(keyword => message.toLowerCase().includes(keyword))) {
+      const insuranceMatch = message.match(/(?:insurance|coverage|liability)[\s:]*([^.,\n]+)/i);
+      if (insuranceMatch) {
+        extracted.insuranceRequirements = insuranceMatch[0].trim();
+      } else {
+        extracted.insuranceRequirements = 'Required';
       }
     }
 
