@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -47,6 +48,8 @@ export default function BankGuaranteeRegistration() {
   const [currentMessage, setCurrentMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [guaranteeData, setGuaranteeData] = useState<BankGuaranteeData>({ completeness: 0 });
+  const [isRegistrationComplete, setIsRegistrationComplete] = useState(false);
+  const [showCompletionSheet, setShowCompletionSheet] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -56,6 +59,69 @@ export default function BankGuaranteeRegistration() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const saveGuaranteeData = async (data: BankGuaranteeData) => {
+    if (!user) {
+      toast.error('You must be logged in to save bank guarantee data');
+      return;
+    }
+
+    try {
+      console.log('Saving bank guarantee data', data);
+
+      // Guard date parsing to avoid invalid date errors
+      const parsedDate = data.expiryDate ? new Date(data.expiryDate) : null;
+      const isoDate = parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate.toISOString().split('T')[0] : null;
+
+      const guaranteeData = {
+        applicant: data.applicant,
+        beneficiary: data.beneficiary,
+        guarantor_bank: data.guarantorBank,
+        underlying_transaction_reference: data.underlyingTransactionReference,
+        guarantee_amount: data.guaranteeAmount,
+        currency: data.currency,
+        expiry_date: isoDate,
+        terms_for_drawing: data.termsForDrawing,
+        form_of_presentation: data.formOfPresentation,
+        charges: data.charges,
+        advising_bank: data.advisingBank,
+        governing_rules: data.governingRules,
+        additional_conditions: data.additionalConditions,
+        user_id: user.id
+      };
+
+      // Check for existing guarantee and handle upsert manually
+      const { data: existingGuarantee, error: existsErr } = await supabase
+        .from('bank_guarantees')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (existsErr) throw existsErr;
+
+      let guaranteeError = null as unknown as { message?: string } | null;
+      if (existingGuarantee?.id) {
+        const { error } = await supabase
+          .from('bank_guarantees')
+          .update(guaranteeData)
+          .eq('id', existingGuarantee.id);
+        guaranteeError = error;
+      } else {
+        const { error } = await supabase
+          .from('bank_guarantees')
+          .insert(guaranteeData);
+        guaranteeError = error;
+      }
+
+      if (guaranteeError) throw guaranteeError;
+
+      setIsRegistrationComplete(true);
+      setShowCompletionSheet(true);
+      toast.success('Bank guarantee registration completed successfully!');
+    } catch (error: any) {
+      console.error('Error saving bank guarantee data:', error);
+      toast.error(`Failed to save bank guarantee data: ${error?.message || 'Please try again.'}`);
+    }
+  };
 
   const analyzeMessage = (message: string): Partial<BankGuaranteeData> => {
     const extracted: Partial<BankGuaranteeData> = {};
@@ -123,6 +189,42 @@ export default function BankGuaranteeRegistration() {
       }
     }
 
+    // Extract form of presentation
+    if (message.toLowerCase().includes('presentation') || message.toLowerCase().includes('document')) {
+      const presentationMatch = message.match(/(?:presentation|document)[:\s]+([^.,\n]+)/i);
+      if (presentationMatch) {
+        extracted.formOfPresentation = presentationMatch[1]?.trim();
+      }
+    }
+
+    // Extract advising bank
+    if (message.toLowerCase().includes('advising bank') || message.toLowerCase().includes('correspondent bank')) {
+      const advisingMatch = message.match(/(?:advising|correspondent)\s+bank[:\s]+([^.,\n]+)/i);
+      if (advisingMatch) {
+        extracted.advisingBank = advisingMatch[1]?.trim();
+      }
+    }
+
+    // Extract governing rules
+    if (message.toLowerCase().includes('rules') || message.toLowerCase().includes('urdg') || message.toLowerCase().includes('isp98')) {
+      const rulesMatch = message.match(/(?:rules|urdg|isp98)[:\s]*([^.,\n]+)/i);
+      if (rulesMatch) {
+        extracted.governingRules = rulesMatch[0]?.trim();
+      } else {
+        extracted.governingRules = 'Mentioned';
+      }
+    }
+
+    // Extract additional conditions
+    if (message.toLowerCase().includes('condition') || message.toLowerCase().includes('additional') || message.toLowerCase().includes('special')) {
+      const conditionsMatch = message.match(/(?:condition|additional|special)[:\s]*([^.,\n]+)/i);
+      if (conditionsMatch) {
+        extracted.additionalConditions = conditionsMatch[0]?.trim();
+      } else {
+        extracted.additionalConditions = 'Provided';
+      }
+    }
+
     return extracted;
   };
 
@@ -138,6 +240,9 @@ export default function BankGuaranteeRegistration() {
     if (!currentData.guarantorBank && !userData.guarantorBank) {
       missingFields.push('guarantor bank');
     }
+    if (!currentData.underlyingTransactionReference && !userData.underlyingTransactionReference) {
+      missingFields.push('transaction reference');
+    }
     if (!currentData.guaranteeAmount && !userData.guaranteeAmount) {
       missingFields.push('guarantee amount');
     }
@@ -146,6 +251,24 @@ export default function BankGuaranteeRegistration() {
     }
     if (!currentData.expiryDate && !userData.expiryDate) {
       missingFields.push('expiry date');
+    }
+    if (!currentData.termsForDrawing && !userData.termsForDrawing) {
+      missingFields.push('terms for drawing');
+    }
+    if (!currentData.formOfPresentation && !userData.formOfPresentation) {
+      missingFields.push('form of presentation');
+    }
+    if (!currentData.charges && !userData.charges) {
+      missingFields.push('charges');
+    }
+    if (!currentData.advisingBank && !userData.advisingBank) {
+      missingFields.push('advising bank');
+    }
+    if (!currentData.governingRules && !userData.governingRules) {
+      missingFields.push('governing rules');
+    }
+    if (!currentData.additionalConditions && !userData.additionalConditions) {
+      missingFields.push('additional conditions');
     }
 
     if (Object.keys(userData).length > 0) {
@@ -216,39 +339,20 @@ export default function BankGuaranteeRegistration() {
       setGuaranteeData(newGuaranteeData);
 
       // If 100% complete, save to database
-      if (newGuaranteeData.completeness === 100 && user) {
-        try {
-          const { error } = await supabase
-            .from('bank_guarantees')
-            .upsert({
-              user_id: user.id,
-              applicant: newGuaranteeData.applicant,
-              beneficiary: newGuaranteeData.beneficiary,
-              guarantor_bank: newGuaranteeData.guarantorBank,
-              underlying_transaction_reference: newGuaranteeData.underlyingTransactionReference,
-              guarantee_amount: newGuaranteeData.guaranteeAmount,
-              currency: newGuaranteeData.currency,
-              expiry_date: newGuaranteeData.expiryDate,
-              terms_for_drawing: newGuaranteeData.termsForDrawing,
-              form_of_presentation: newGuaranteeData.formOfPresentation,
-              charges: newGuaranteeData.charges,
-              advising_bank: newGuaranteeData.advisingBank,
-              governing_rules: newGuaranteeData.governingRules,
-              additional_conditions: newGuaranteeData.additionalConditions,
-            }, {
-              onConflict: 'user_id'
-            });
-
-          if (error) {
-            console.error('Error saving bank guarantee data:', error);
-            toast.error('Failed to save bank guarantee data');
-          } else {
-            toast.success('Bank guarantee registration completed successfully!');
-          }
-        } catch (error) {
-          console.error('Error saving bank guarantee data:', error);
-          toast.error('Failed to save bank guarantee data');
-        }
+      if (newGuaranteeData.completeness === 100 && !isRegistrationComplete) {
+        await saveGuaranteeData(newGuaranteeData);
+        
+        // Add completion message
+        const completionMessage: Message = {
+          id: (Date.now() + 2).toString(),
+          type: 'ai',
+          content: "🎉 Congratulations! Your bank guarantee registration is now complete and has been saved to our database. You can now access our platform with your guarantee details.",
+          timestamp: new Date()
+        };
+        
+        setMessages(prev => [...prev, completionMessage]);
+        setIsTyping(false);
+        return; // Don't show the regular AI response
       }
 
       const aiResponse = generateAIResponse(extractedData, guaranteeData);
@@ -470,13 +574,13 @@ export default function BankGuaranteeRegistration() {
                     value={currentMessage}
                     onChange={(e) => setCurrentMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="Provide bank guarantee details (applicant, beneficiary, amount, etc.)..."
+                    placeholder={isRegistrationComplete ? "Registration completed!" : "Provide bank guarantee details (applicant, beneficiary, amount, etc.)..."}
                     className="flex-1"
-                    disabled={isTyping}
+                    disabled={isTyping || isRegistrationComplete}
                   />
                   <Button 
                     onClick={sendMessage}
-                    disabled={!currentMessage.trim() || isTyping}
+                    disabled={!currentMessage.trim() || isTyping || isRegistrationComplete}
                     size="icon"
                     className="bg-gradient-button hover:opacity-90 text-white border-0"
                   >
@@ -487,6 +591,35 @@ export default function BankGuaranteeRegistration() {
             </Card>
           </div>
         </div>
+
+        {/* Completion Sheet */}
+        <Sheet open={showCompletionSheet} onOpenChange={setShowCompletionSheet}>
+          <SheetContent side="right" className="w-full sm:max-w-md">
+            <SheetHeader>
+              <SheetTitle>Bank guarantee registration saved</SheetTitle>
+              <SheetDescription>Here's a summary of your guarantee information.</SheetDescription>
+            </SheetHeader>
+            <div className="mt-4 space-y-2 text-sm">
+              {guaranteeData.applicant && <div><strong>Applicant:</strong> {guaranteeData.applicant}</div>}
+              {guaranteeData.beneficiary && <div><strong>Beneficiary:</strong> {guaranteeData.beneficiary}</div>}
+              {guaranteeData.guarantorBank && <div><strong>Guarantor Bank:</strong> {guaranteeData.guarantorBank}</div>}
+              {guaranteeData.underlyingTransactionReference && <div><strong>Transaction Reference:</strong> {guaranteeData.underlyingTransactionReference}</div>}
+              {guaranteeData.guaranteeAmount && <div><strong>Guarantee Amount:</strong> {guaranteeData.guaranteeAmount}</div>}
+              {guaranteeData.currency && <div><strong>Currency:</strong> {guaranteeData.currency}</div>}
+              {guaranteeData.expiryDate && <div><strong>Expiry Date:</strong> {guaranteeData.expiryDate}</div>}
+              {guaranteeData.termsForDrawing && <div><strong>Terms for Drawing:</strong> {guaranteeData.termsForDrawing}</div>}
+              {guaranteeData.formOfPresentation && <div><strong>Form of Presentation:</strong> {guaranteeData.formOfPresentation}</div>}
+              {guaranteeData.charges && <div><strong>Charges:</strong> {guaranteeData.charges}</div>}
+              {guaranteeData.advisingBank && <div><strong>Advising Bank:</strong> {guaranteeData.advisingBank}</div>}
+              {guaranteeData.governingRules && <div><strong>Governing Rules:</strong> {guaranteeData.governingRules}</div>}
+              {guaranteeData.additionalConditions && <div><strong>Additional Conditions:</strong> {guaranteeData.additionalConditions}</div>}
+            </div>
+            <div className="mt-6 flex gap-2">
+              <Button onClick={() => setShowCompletionSheet(false)} className="bg-gradient-button text-white">Close</Button>
+              <Button variant="outline" onClick={() => navigate('/')}>Go to Home</Button>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </div>
   );
