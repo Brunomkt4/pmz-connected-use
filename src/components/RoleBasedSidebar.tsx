@@ -43,6 +43,27 @@ export function RoleBasedSidebar() {
 
   const isActive = (path: string) => currentPath === path;
 
+  // Filter menu items based on account type and logged in status
+  const getVisibleMenuItems = () => {
+    let filteredItems = allMenuItems;
+    
+    // Remove home item if user is logged in
+    if (profile) {
+      filteredItems = filteredItems.filter(item => item.id !== "home");
+    }
+    
+    // Filter by account type if profile is available
+    if (profile?.account_type_id) {
+      filteredItems = filteredItems.filter(item => 
+        item.allowedAccountTypes.includes(profile.account_type_id)
+      );
+    }
+    
+    return filteredItems;
+  };
+
+  const visibleMenuItems = getVisibleMenuItems();
+
   // Show loading state
   if (loading) {
     return (
@@ -55,11 +76,6 @@ export function RoleBasedSidebar() {
       </Sidebar>
     );
   }
-
-  // Filter menu items based on user's account type
-  const visibleMenuItems = allMenuItems.filter(item => 
-    !profile || item.allowedAccountTypes.includes(profile.account_type_id)
-  );
 
   return (
     <Sidebar
