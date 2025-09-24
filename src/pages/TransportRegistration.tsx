@@ -130,11 +130,27 @@ export default function TransportRegistration() {
         user_id: user.id
       };
 
-      const { error: carrierError } = await supabase
+      // Upsert requires a unique constraint; since carriers.user_id isn't unique, do insert/update manually
+      const { data: existingCarrier, error: existsErr } = await supabase
         .from('carriers')
-        .upsert(carrierData, {
-          onConflict: 'user_id'
-        });
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (existsErr) throw existsErr;
+
+      let carrierError = null as unknown as { message?: string } | null;
+      if (existingCarrier?.id) {
+        const { error } = await supabase
+          .from('carriers')
+          .update(carrierData)
+          .eq('id', existingCarrier.id);
+        carrierError = error;
+      } else {
+        const { error } = await supabase
+          .from('carriers')
+          .insert(carrierData);
+        carrierError = error;
+      }
 
       if (carrierError) throw carrierError;
 
