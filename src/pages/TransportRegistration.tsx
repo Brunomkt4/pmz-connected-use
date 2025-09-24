@@ -48,7 +48,7 @@ export default function TransportRegistration() {
     {
       id: '1',
       type: 'ai',
-      content: 'Welcome! I\'m your specialized assistant for transport company registration. I\'ll help you register your comprehensive logistics profile efficiently. Please tell me about your transport company - name, types of vehicles, service coverage areas, rates, schedules, and any special services...',
+      content: 'Welcome! I\'m your specialized assistant for transport company registration. I need to collect 12 key pieces of information about your transport services: Vehicle Fleet, Service Areas, Transport Capacity, Mode of Transport, Origin & Destination routes, Estimated Transit Time, Shipment Schedule, Freight Cost, Included Services, Documents & Compliance, Tracking & Support, and Special Requirements. Let\'s start with your company name and what types of vehicles you operate.',
       timestamp: new Date()
     }
   ]);
@@ -248,9 +248,18 @@ export default function TransportRegistration() {
       extracted.documentsCompliance = foundDocs;
     }
 
-    // Extract tracking support
-    if (message.toLowerCase().includes('tracking') || message.toLowerCase().includes('gps') || message.toLowerCase().includes('real-time')) {
-      extracted.trackingSupportDetails = 'Available';
+    // Extract special requirements
+    const specialKeywords = ['hazmat', 'oversized', 'fragile', 'perishable', 'valuable', 'time-sensitive', 'expedited'];
+    const foundSpecial = specialKeywords.filter(keyword => 
+      message.toLowerCase().includes(keyword)
+    );
+    if (foundSpecial.length > 0) {
+      extracted.specialRequirements = foundSpecial.join(', ');
+    } else if (message.toLowerCase().includes('special') || message.toLowerCase().includes('requirement')) {
+      const specialMatch = message.match(/(?:special|requirement|need)[\s:]*([^.,\n]+)/i);
+      if (specialMatch) {
+        extracted.specialRequirements = specialMatch[1].trim();
+      }
     }
 
     return extracted;
@@ -259,11 +268,9 @@ export default function TransportRegistration() {
   const generateAIResponse = (userData: Partial<TransportData>, currentData: TransportData): string => {
     const missingFields = [];
     
+    // Basic company info
     if (!currentData.companyName && !userData.companyName) {
       missingFields.push('company name');
-    }
-    if (!currentData.licenseNumber) {
-      missingFields.push('transport license number');
     }
     if (!currentData.phone && !userData.phone) {
       missingFields.push('contact phone');
@@ -271,62 +278,113 @@ export default function TransportRegistration() {
     if (!currentData.email && !userData.email) {
       missingFields.push('email address');
     }
+    
+    // 12 required transport fields
     if (!currentData.vehicleTypes?.length && !userData.vehicleTypes?.length) {
-      missingFields.push('vehicle types');
-    }
-    if (!currentData.modeOfTransport?.length && !userData.modeOfTransport?.length) {
-      missingFields.push('mode of transport');
+      missingFields.push('vehicle fleet details');
     }
     if (!currentData.serviceAreas?.length && !userData.serviceAreas?.length) {
-      missingFields.push('service coverage areas');
+      missingFields.push('service areas');
     }
     if (!currentData.capacity && !userData.capacity) {
       missingFields.push('transport capacity');
     }
-    if (!currentData.freightCost && !userData.freightCost) {
-      missingFields.push('freight rates');
+    if (!currentData.modeOfTransport?.length && !userData.modeOfTransport?.length) {
+      missingFields.push('mode of transport');
+    }
+    if (!currentData.originDestinations?.length && !userData.originDestinations?.length) {
+      missingFields.push('origin & destination routes');
     }
     if (!currentData.estimatedTransitTime && !userData.estimatedTransitTime) {
       missingFields.push('estimated transit time');
     }
+    if (!currentData.shipmentSchedule && !userData.shipmentSchedule) {
+      missingFields.push('shipment schedule');
+    }
+    if (!currentData.freightCost && !userData.freightCost) {
+      missingFields.push('freight cost');
+    }
+    if (!currentData.includedServices?.length && !userData.includedServices?.length) {
+      missingFields.push('included services');
+    }
+    if (!currentData.documentsCompliance?.length && !userData.documentsCompliance?.length) {
+      missingFields.push('documents & compliance');
+    }
+    if (!currentData.trackingSupportDetails && !userData.trackingSupportDetails) {
+      missingFields.push('tracking & support details');
+    }
+    if (!currentData.specialRequirements && !userData.specialRequirements) {
+      missingFields.push('special requirements');
+    }
 
-    if (Object.keys(userData).length > 0) {
-      let response = "Great! I\'ve captured ";
+      if (Object.keys(userData).length > 0) {
+      let response = "Perfect! I\'ve captured ";
       const extractedItems = [];
       
       if (userData.companyName) extractedItems.push(`company: ${userData.companyName}`);
-      if (userData.vehicleTypes) extractedItems.push(`vehicles: ${userData.vehicleTypes.join(', ')}`);
-      if (userData.modeOfTransport) extractedItems.push(`transport modes: ${userData.modeOfTransport.join(', ')}`);
+      if (userData.vehicleTypes) extractedItems.push(`vehicle fleet: ${userData.vehicleTypes.join(', ')}`);
       if (userData.serviceAreas) extractedItems.push(`service areas: ${userData.serviceAreas.join(', ')}`);
       if (userData.capacity) extractedItems.push(`capacity: ${userData.capacity}`);
-      if (userData.freightCost) extractedItems.push(`rates: ${userData.freightCost}`);
+      if (userData.modeOfTransport) extractedItems.push(`transport modes: ${userData.modeOfTransport.join(', ')}`);
+      if (userData.originDestinations) extractedItems.push(`routes: ${userData.originDestinations.join(', ')}`);
       if (userData.estimatedTransitTime) extractedItems.push(`transit time: ${userData.estimatedTransitTime}`);
-      if (userData.temperatureControl) extractedItems.push('temperature-controlled transport capability');
+      if (userData.shipmentSchedule) extractedItems.push(`schedule: ${userData.shipmentSchedule}`);
+      if (userData.freightCost) extractedItems.push(`freight cost: ${userData.freightCost}`);
+      if (userData.includedServices) extractedItems.push(`services: ${userData.includedServices.join(', ')}`);
+      if (userData.documentsCompliance) extractedItems.push(`compliance: ${userData.documentsCompliance.join(', ')}`);
+      if (userData.trackingSupportDetails) extractedItems.push(`tracking: ${userData.trackingSupportDetails}`);
+      if (userData.specialRequirements) extractedItems.push(`special requirements: ${userData.specialRequirements}`);
       
       response += extractedItems.join(', ') + ". ";
       
       if (missingFields.length > 0) {
-        response += `\n\nTo complete your transport registration, I need: ${missingFields.slice(0, 2).join(' and ')}. `;
+        response += `\n\nNext, I need information about: ${missingFields[0]}. `;
         
-        if (missingFields.includes('transport license number')) {
-          response += "What\'s your DOT or transport license number? ";
-        } else if (missingFields.includes('freight rates')) {
-          response += "What are your freight rates? ";
-        } else if (missingFields.includes('mode of transport')) {
-          response += "What modes of transport do you offer? ";
+        if (missingFields[0] === 'vehicle fleet details') {
+          response += "What types of vehicles do you operate? (trucks, trailers, refrigerated, etc.)";
+        } else if (missingFields[0] === 'service areas') {
+          response += "Which geographic areas do you serve? (local, regional, national, international)";
+        } else if (missingFields[0] === 'transport capacity') {
+          response += "What's your transport capacity? (tons, cubic meters, containers, etc.)";
+        } else if (missingFields[0] === 'mode of transport') {
+          response += "What modes of transport do you offer? (road, rail, air, sea)";
+        } else if (missingFields[0] === 'origin & destination routes') {
+          response += "What are your main origin and destination routes?";
+        } else if (missingFields[0] === 'estimated transit time') {
+          response += "What are your typical transit times for deliveries?";
+        } else if (missingFields[0] === 'shipment schedule') {
+          response += "What's your shipment schedule? (daily, weekly, on-demand)";
+        } else if (missingFields[0] === 'freight cost') {
+          response += "What are your freight costs? (per kg, per mile, per container, etc.)";
+        } else if (missingFields[0] === 'included services') {
+          response += "What services are included? (loading, unloading, packaging, insurance, etc.)";
+        } else if (missingFields[0] === 'documents & compliance') {
+          response += "What documents and compliance standards do you handle?";
+        } else if (missingFields[0] === 'tracking & support details') {
+          response += "What tracking and support do you provide? (GPS, real-time updates, customer service)";
+        } else if (missingFields[0] === 'special requirements') {
+          response += "Do you have any special requirements or capabilities? (temperature control, hazmat, oversized cargo, etc.)";
+        } else {
+          response += `Please provide your ${missingFields[0]}.`;
         }
       } else {
-        response += "\n\n🚛 Registration nearly complete! Just finalizing transport credentials.";
+        response += "\n\n🎉 All transport information collected! Your registration is 100% complete.";
       }
       
       return response;
     }
 
     if (missingFields.length > 0) {
-      return `I see! To proceed with the transport registration, could you provide your ${missingFields[0]}?`;
+      if (missingFields[0] === 'company name') {
+        return "Let's start with your transport company name.";
+      } else if (missingFields[0] === 'vehicle fleet details') {
+        return "What types of vehicles do you operate in your fleet?";
+      } else {
+        return `To complete your transport registration, please provide: ${missingFields[0]}.`;
+      }
     }
 
-    return "Excellent! All transport information collected. Processing your logistics registration.";
+    return "🎉 Excellent! All transport information collected. Your registration is now 100% complete!";
   };
 
   const sendMessage = async () => {
@@ -347,27 +405,26 @@ export default function TransportRegistration() {
       const extractedData = analyzeMessage(currentMessage);
       const newTransportData = { ...transportData, ...extractedData };
       
-      // Calculate completeness - all 18 main fields
-      const totalFields = 18;
+      // Calculate completeness - 15 required fields (3 basic + 12 transport fields)
+      const totalFields = 15;
       let filledFields = 0;
+      // Basic info (3 fields)
       if (newTransportData.companyName) filledFields++;
-      if (newTransportData.licenseNumber) filledFields++;
       if (newTransportData.phone) filledFields++;
       if (newTransportData.email) filledFields++;
-      if (newTransportData.address) filledFields++;
+      // 12 transport fields
       if (newTransportData.vehicleTypes?.length) filledFields++;
-      if (newTransportData.modeOfTransport?.length) filledFields++;
       if (newTransportData.serviceAreas?.length) filledFields++;
       if (newTransportData.capacity) filledFields++;
-      if (newTransportData.insurance) filledFields++;
-      if (newTransportData.certifications?.length) filledFields++;
+      if (newTransportData.modeOfTransport?.length) filledFields++;
       if (newTransportData.originDestinations?.length) filledFields++;
       if (newTransportData.estimatedTransitTime) filledFields++;
       if (newTransportData.shipmentSchedule) filledFields++;
       if (newTransportData.freightCost) filledFields++;
       if (newTransportData.includedServices?.length) filledFields++;
-      if (newTransportData.trackingSupportDetails) filledFields++;
       if (newTransportData.documentsCompliance?.length) filledFields++;
+      if (newTransportData.trackingSupportDetails) filledFields++;
+      if (newTransportData.specialRequirements) filledFields++;
       
       newTransportData.completeness = Math.round((filledFields / totalFields) * 100);
       setTransportData(newTransportData);
@@ -452,77 +509,83 @@ export default function TransportRegistration() {
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${transportData.companyName ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-xs">Company Info</span>
+                  {transportData.companyName && <CheckCircle className="h-3 w-3 text-primary ml-auto" />}
+                </div>
+                
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${transportData.vehicleTypes?.length ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Vehicle Fleet</span>
-                  {transportData.vehicleTypes?.length && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                  <span className="text-xs">Vehicle Fleet</span>
+                  {transportData.vehicleTypes?.length && <CheckCircle className="h-3 w-3 text-primary ml-auto" />}
                 </div>
                 
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${transportData.serviceAreas?.length ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Service Areas</span>
-                  {transportData.serviceAreas?.length && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                  <span className="text-xs">Service Areas</span>
+                  {transportData.serviceAreas?.length && <CheckCircle className="h-3 w-3 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${transportData.capacity ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Transport Capacity</span>
-                  {transportData.capacity && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                  <span className="text-xs">Transport Capacity</span>
+                  {transportData.capacity && <CheckCircle className="h-3 w-3 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${transportData.modeOfTransport?.length ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Mode of Transport</span>
-                  {transportData.modeOfTransport?.length && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                  <span className="text-xs">Mode of Transport</span>
+                  {transportData.modeOfTransport?.length && <CheckCircle className="h-3 w-3 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${transportData.originDestinations?.length ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Origin & Destination</span>
-                  {transportData.originDestinations?.length && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                  <span className="text-xs">Origin & Destination</span>
+                  {transportData.originDestinations?.length && <CheckCircle className="h-3 w-3 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${transportData.estimatedTransitTime ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Estimated Transit Time</span>
-                  {transportData.estimatedTransitTime && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                  <span className="text-xs">Estimated Transit Time</span>
+                  {transportData.estimatedTransitTime && <CheckCircle className="h-3 w-3 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${transportData.shipmentSchedule ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Shipment Schedule</span>
-                  {transportData.shipmentSchedule && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                  <span className="text-xs">Shipment Schedule</span>
+                  {transportData.shipmentSchedule && <CheckCircle className="h-3 w-3 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${transportData.freightCost ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Freight Cost</span>
-                  {transportData.freightCost && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                  <span className="text-xs">Freight Cost</span>
+                  {transportData.freightCost && <CheckCircle className="h-3 w-3 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${transportData.includedServices?.length ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Included Services</span>
-                  {transportData.includedServices?.length && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                  <span className="text-xs">Included Services</span>
+                  {transportData.includedServices?.length && <CheckCircle className="h-3 w-3 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${transportData.documentsCompliance?.length ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Documents & Compliance</span>
-                  {transportData.documentsCompliance?.length && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                  <span className="text-xs">Documents & Compliance</span>
+                  {transportData.documentsCompliance?.length && <CheckCircle className="h-3 w-3 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${transportData.trackingSupportDetails ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Tracking & Support</span>
-                  {transportData.trackingSupportDetails && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                  <span className="text-xs">Tracking & Support</span>
+                  {transportData.trackingSupportDetails && <CheckCircle className="h-3 w-3 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${transportData.specialRequirements ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Special Requirements</span>
-                  {transportData.specialRequirements && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                  <span className="text-xs">Special Requirements</span>
+                  {transportData.specialRequirements && <CheckCircle className="h-3 w-3 text-primary ml-auto" />}
                 </div>
               </div>
 
