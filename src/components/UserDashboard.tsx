@@ -141,6 +141,26 @@ const UserDashboard = () => {
           </CardContent>
         </Card>
 
+        {profile?.account_type_id === 2 && ( // Only show for buyers
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Marketplace</CardTitle>
+              <CardDescription>
+                Browse and purchase products from suppliers
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/marketplace')}
+                className="w-full"
+              >
+                Browse Products
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Search</CardTitle>

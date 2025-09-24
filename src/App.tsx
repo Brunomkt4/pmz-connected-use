@@ -21,6 +21,7 @@ import BankGuaranteeRegistration from "./pages/BankGuaranteeRegistration";
 import LetterOfCreditRegistration from "./pages/LetterOfCreditRegistration";
 import CertificationRegistration from "./pages/CertificationRegistration";
 import NotFound from "./pages/NotFound";
+import Marketplace from "./pages/Marketplace";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
+                    <Route path="/marketplace" element={<ProtectedRoute><RoleBasedRoute allowedAccountTypes={[2]}><Marketplace /></RoleBasedRoute></ProtectedRoute>} />
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/search" element={<ProtectedRoute><SearchResults /></ProtectedRoute>} />
                     <Route path="/transaction-intelligence" element={<ProtectedRoute><TransactionIntelligence /></ProtectedRoute>} />

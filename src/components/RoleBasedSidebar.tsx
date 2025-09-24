@@ -22,6 +22,7 @@ interface MenuItem {
 const allMenuItems: MenuItem[] = [
   { id: "home", label: "Home", url: "/", icon: Home, allowedAccountTypes: [1, 2, 3, 4, 5, 6] },
   { id: "dashboard", label: "Dashboard", url: "/dashboard", icon: LayoutDashboard, allowedAccountTypes: [1, 2, 3, 4, 5, 6] },
+  { id: "marketplace", label: "Marketplace", url: "/marketplace", icon: ShoppingCart, allowedAccountTypes: [2] }, // Only Buyers
   { id: "history", label: "History", url: "/history", icon: History, allowedAccountTypes: [1, 2, 3, 4, 5, 6] },
   { id: "favorites", label: "Favorites", url: "/favorites", icon: Heart, allowedAccountTypes: [1, 2, 3, 4, 5, 6] },
   { id: "messages", label: "Messages", url: "/messages", icon: MessageSquare, allowedAccountTypes: [1, 2, 3, 4, 5, 6] },
