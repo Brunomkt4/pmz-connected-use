@@ -82,21 +82,19 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Delete user profile data first (due to foreign key constraints)
-    const { error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .delete()
-      .eq("user_id", userId);
-
-    if (profileError) {
-      console.error("Error deleting profile:", profileError);
-      return new Response(
-        JSON.stringify({ error: "Failed to delete profile data" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
+    // Delete user data from all related tables first (due to foreign key constraints)
+    const tables = ['suppliers', 'buyers', 'carriers', 'bank_guarantees', 'companies', 'profiles'];
+    
+    for (const table of tables) {
+      const { error } = await supabaseAdmin
+        .from(table)
+        .delete()
+        .eq("user_id", userId);
+      
+      if (error) {
+        console.error(`Error deleting from ${table}:`, error);
+        // Continue with other tables even if one fails
+      }
     }
 
     // Delete the user account from auth
