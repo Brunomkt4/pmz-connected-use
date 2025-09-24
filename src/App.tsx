@@ -5,10 +5,12 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { AppSidebar } from "@/components/AppSidebar";
+import { RoleBasedSidebar } from "@/components/RoleBasedSidebar";
 import Footer from "@/components/Footer";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import RoleBasedRoute from "@/components/RoleBasedRoute";
 import Index from "./pages/Index";
+import UserDashboard from "./components/UserDashboard";
 import Auth from "./pages/Auth";
 import SearchResults from "./pages/SearchResults";
 import TransactionIntelligence from "./pages/TransactionIntelligence";
@@ -38,20 +40,21 @@ const App = () => (
         <BrowserRouter>
           <SidebarProvider defaultOpen={false}>
             <div className="flex min-h-screen w-full bg-background">
-              <AppSidebar />
+              <RoleBasedSidebar />
               <main className="flex-1 overflow-hidden flex flex-col">
                 <div className="flex-1 overflow-auto">
                   <Routes>
                     <Route path="/" element={<Index />} />
+                    <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/search" element={<ProtectedRoute><SearchResults /></ProtectedRoute>} />
                     <Route path="/transaction-intelligence" element={<ProtectedRoute><TransactionIntelligence /></ProtectedRoute>} />
-                    <Route path="/supplier-registration" element={<ProtectedRoute><SupplierRegistration /></ProtectedRoute>} />
-                    <Route path="/buyer-registration" element={<ProtectedRoute><BuyerRegistration /></ProtectedRoute>} />
-                    <Route path="/transport-registration" element={<ProtectedRoute><TransportRegistration /></ProtectedRoute>} />
-                    <Route path="/bank-guarantee-registration" element={<ProtectedRoute><BankGuaranteeRegistration /></ProtectedRoute>} />
-                    <Route path="/letter-of-credit-registration" element={<ProtectedRoute><LetterOfCreditRegistration /></ProtectedRoute>} />
-                    <Route path="/certification-registration" element={<ProtectedRoute><CertificationRegistration /></ProtectedRoute>} />
+                    <Route path="/supplier-registration" element={<ProtectedRoute><RoleBasedRoute allowedAccountTypes={[1]}><SupplierRegistration /></RoleBasedRoute></ProtectedRoute>} />
+                    <Route path="/buyer-registration" element={<ProtectedRoute><RoleBasedRoute allowedAccountTypes={[2]}><BuyerRegistration /></RoleBasedRoute></ProtectedRoute>} />
+                    <Route path="/transport-registration" element={<ProtectedRoute><RoleBasedRoute allowedAccountTypes={[4]}><TransportRegistration /></RoleBasedRoute></ProtectedRoute>} />
+                    <Route path="/bank-guarantee-registration" element={<ProtectedRoute><RoleBasedRoute allowedAccountTypes={[5]}><BankGuaranteeRegistration /></RoleBasedRoute></ProtectedRoute>} />
+                    <Route path="/letter-of-credit-registration" element={<ProtectedRoute><RoleBasedRoute allowedAccountTypes={[6]}><LetterOfCreditRegistration /></RoleBasedRoute></ProtectedRoute>} />
+                    <Route path="/certification-registration" element={<ProtectedRoute><RoleBasedRoute allowedAccountTypes={[3]}><CertificationRegistration /></RoleBasedRoute></ProtectedRoute>} />
                     <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
                     <Route path="/favorites" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
                     <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />

@@ -4,11 +4,22 @@ import { FilterTags } from "@/components/FilterTags";
 import { ProductGrid } from "@/components/ProductGrid";
 import { ExplanationSections } from "@/components/ExplanationSections";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 const Index = () => {
   const { user } = useAuth();
+  const { profile, loading } = useUserProfile();
+  const navigate = useNavigate();
+
+  // Redirect authenticated users to their dashboard
+  useEffect(() => {
+    if (user && profile && !loading) {
+      navigate('/dashboard');
+    }
+  }, [user, profile, loading, navigate]);
 
   return (
     <div className="min-h-screen bg-background">

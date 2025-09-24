@@ -1,0 +1,184 @@
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Building2, ShoppingCart, Ship, Shield, CreditCard, Award } from 'lucide-react';
+
+const UserDashboard = () => {
+  const { profile, accountType, loading } = useUserProfile();
+  const navigate = useNavigate();
+
+  const getRegistrationInfo = () => {
+    if (!profile) return null;
+
+    const registrationRoutes = {
+      1: { // Seller
+        title: 'Supplier Registration',
+        description: 'Register your company as a supplier and showcase your products',
+        route: '/supplier-registration',
+        icon: Building2,
+        color: 'text-blue-600'
+      },
+      2: { // Buyer
+        title: 'Buyer Registration', 
+        description: 'Register as a buyer and specify your product requirements',
+        route: '/buyer-registration',
+        icon: ShoppingCart,
+        color: 'text-green-600'
+      },
+      3: { // Insurance Company
+        title: 'Certification Registration',
+        description: 'Register your insurance and certification services',
+        route: '/certification-registration', 
+        icon: Award,
+        color: 'text-purple-600'
+      },
+      4: { // Carrier
+        title: 'Transport Registration',
+        description: 'Register your transportation and logistics services',
+        route: '/transport-registration',
+        icon: Ship,
+        color: 'text-orange-600'
+      },
+      5: { // Bank Guarantee
+        title: 'Bank Guarantee Registration',
+        description: 'Register your bank guarantee services',
+        route: '/bank-guarantee-registration',
+        icon: Shield,
+        color: 'text-red-600'
+      },
+      6: { // Financing
+        title: 'Letter of Credit Registration',
+        description: 'Register your financing and letter of credit services',
+        route: '/letter-of-credit-registration',
+        icon: CreditCard,
+        color: 'text-indigo-600'
+      }
+    };
+
+    return registrationRoutes[profile.account_type_id as keyof typeof registrationRoutes];
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading your dashboard...</div>
+      </div>
+    );
+  }
+
+  if (!profile || !accountType) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile Not Found</CardTitle>
+            <CardDescription>
+              Unable to load your profile information. Please try logging in again.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  const registrationInfo = getRegistrationInfo();
+
+  return (
+    <div className="container mx-auto px-4 py-8 space-y-6">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold mb-2">Welcome, {profile.full_name}!</h1>
+        <p className="text-muted-foreground">
+          You are registered as: <span className="font-semibold">{accountType.name}</span>
+        </p>
+      </div>
+
+      {registrationInfo && (
+        <Card className="max-w-2xl mx-auto">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <registrationInfo.icon className={`h-12 w-12 ${registrationInfo.color}`} />
+            </div>
+            <CardTitle className="text-2xl">{registrationInfo.title}</CardTitle>
+            <CardDescription className="text-lg">
+              {registrationInfo.description}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center">
+              <Button 
+                onClick={() => navigate(registrationInfo.route)}
+                size="lg"
+                className="w-full max-w-sm"
+              >
+                Go to Registration
+              </Button>
+            </div>
+            <div className="text-sm text-muted-foreground text-center">
+              <p>Complete your registration to start using the platform's features.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Transaction Intelligence</CardTitle>
+            <CardDescription>
+              View market insights and transaction data
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/transaction-intelligence')}
+              className="w-full"
+            >
+              View Intelligence
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Search</CardTitle>
+            <CardDescription>
+              Find products and services on the platform
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/search')}
+              className="w-full"
+            >
+              Start Searching
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Settings</CardTitle>
+            <CardDescription>
+              Manage your account and preferences
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/settings')}
+              className="w-full"
+            >
+              Open Settings
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default UserDashboard;
