@@ -224,10 +224,24 @@ export default function TransportRegistration() {
       }
     }
 
-    // Extract freight cost
-    const costMatch = message.match(/\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:per|\/)\s*(?:kg|ton|mile|km)/i);
-    if (costMatch) {
-      extracted.freightCost = costMatch[0];
+    // Extract freight cost - more flexible pattern
+    const costPatterns = [
+      // Pattern 1: Currency symbols with various formats
+      /(?:\$|R\$|US\$|€|£|¥)\s*(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:per|\/|por)\s*(?:kg|ton|tons?|tonelada|mile|km|container|m3|cubic|metro)/i,
+      // Pattern 2: Numbers with currency words
+      /(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:dollars?|reais?|euros?|pounds?|usd|brl|eur|gbp)\s*(?:per|\/|por)\s*(?:kg|ton|tons?|tonelada|mile|km|container|m3|cubic|metro)/i,
+      // Pattern 3: General price mentions
+      /(?:custa|costs?|price|preço|valor)\s*:?\s*(?:\$|R\$|US\$|€|£|¥)?\s*(\d+(?:,\d+)*(?:\.\d+)?)/i,
+      // Pattern 4: Simple number with units
+      /(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:per|\/|por)\s*(?:kg|ton|tons?|tonelada|mile|km|container|m3)/i
+    ];
+    
+    for (const pattern of costPatterns) {
+      const match = message.match(pattern);
+      if (match) {
+        extracted.freightCost = match[0];
+        break;
+      }
     }
 
     // Extract services
