@@ -5,6 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface Message {
   id: string;
@@ -14,24 +17,30 @@ interface Message {
 }
 
 interface BankGuaranteeData {
-  bankName?: string;
-  guaranteeTypes?: string[];
-  maxAmount?: string;
+  applicant?: string;
+  beneficiary?: string;
+  guarantorBank?: string;
+  underlyingTransactionReference?: string;
+  guaranteeAmount?: string;
   currency?: string;
-  validityPeriod?: string;
-  swiftCode?: string;
-  contactPerson?: string;
-  rating?: string;
+  expiryDate?: string;
+  termsForDrawing?: string;
+  formOfPresentation?: string;
+  charges?: string;
+  advisingBank?: string;
+  governingRules?: string;
+  additionalConditions?: string;
   completeness: number;
 }
 
 export default function BankGuaranteeRegistration() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       type: 'ai',
-      content: 'Hello! I\'m your specialized assistant for bank guarantee registration. I\'ll help you set up your financial guarantee services efficiently. Please provide information about your bank - name, types of guarantees you issue, maximum guarantee amounts, supported currencies, and your international banking credentials...',
+      content: 'Hello! I\'m your specialized assistant for bank guarantee registration. I\'ll help you register your bank guarantee requirements. Please provide details about the applicant, beneficiary, guarantee amount, expiry date, and any specific terms or conditions for the bank guarantee...',
       timestamp: new Date()
     }
   ]);
@@ -51,54 +60,67 @@ export default function BankGuaranteeRegistration() {
   const analyzeMessage = (message: string): Partial<BankGuaranteeData> => {
     const extracted: Partial<BankGuaranteeData> = {};
     
-    // Extract bank name
-    const bankPatterns = [
-      /(?:bank|banking|financial)\s+([^.,\n]+)/i,
-      /^([A-Z][a-zA-Z\s&]+)(?:\s+(?:bank|banking))?/i
-    ];
-    
-    for (const pattern of bankPatterns) {
-      const match = message.match(pattern);
-      if (match) {
-        extracted.bankName = match[1]?.trim();
-        break;
+    // Extract applicant
+    if (message.toLowerCase().includes('applicant')) {
+      const applicantMatch = message.match(/applicant[:\s]+([^.,\n]+)/i);
+      if (applicantMatch) {
+        extracted.applicant = applicantMatch[1]?.trim();
       }
     }
 
-    // Extract guarantee types
-    const guaranteeKeywords = ['performance', 'payment', 'advance payment', 'bid bond', 'warranty', 'maintenance', 'financial', 'standby LC'];
-    const foundTypes = guaranteeKeywords.filter(keyword => 
-      message.toLowerCase().includes(keyword.toLowerCase())
-    );
-    if (foundTypes.length > 0) {
-      extracted.guaranteeTypes = foundTypes;
+    // Extract beneficiary
+    if (message.toLowerCase().includes('beneficiary')) {
+      const beneficiaryMatch = message.match(/beneficiary[:\s]+([^.,\n]+)/i);
+      if (beneficiaryMatch) {
+        extracted.beneficiary = beneficiaryMatch[1]?.trim();
+      }
+    }
+
+    // Extract guarantor bank
+    if (message.toLowerCase().includes('guarantor') || message.toLowerCase().includes('issuing bank')) {
+      const guarantorMatch = message.match(/(?:guarantor|issuing)\s+bank[:\s]+([^.,\n]+)/i);
+      if (guarantorMatch) {
+        extracted.guarantorBank = guarantorMatch[1]?.trim();
+      }
+    }
+
+    // Extract transaction reference
+    if (message.toLowerCase().includes('reference') || message.toLowerCase().includes('transaction')) {
+      const refMatch = message.match(/(?:reference|transaction)[:\s]+([^.,\n]+)/i);
+      if (refMatch) {
+        extracted.underlyingTransactionReference = refMatch[1]?.trim();
+      }
     }
 
     // Extract amounts and currency
     const amountMatch = message.match(/\$?(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:million|m|billion|b|thousand|k)?\s*(USD|EUR|GBP|JPY|CAD|AUD)?/i);
     if (amountMatch) {
-      extracted.maxAmount = amountMatch[0];
+      extracted.guaranteeAmount = amountMatch[0];
       if (amountMatch[2]) {
         extracted.currency = amountMatch[2].toUpperCase();
       }
     }
 
-    // Extract SWIFT code
-    const swiftMatch = message.match(/\b([A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?)\b/);
-    if (swiftMatch) {
-      extracted.swiftCode = swiftMatch[1];
+    // Extract expiry date
+    const dateMatch = message.match(/(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}|\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2})/);
+    if (dateMatch) {
+      extracted.expiryDate = dateMatch[0];
     }
 
-    // Extract validity period
-    const validityMatch = message.match(/(\d+)\s*(?:days?|months?|years?)/i);
-    if (validityMatch) {
-      extracted.validityPeriod = validityMatch[0];
+    // Extract terms for drawing
+    if (message.toLowerCase().includes('terms') || message.toLowerCase().includes('drawing')) {
+      const termsMatch = message.match(/(?:terms|drawing)[:\s]+([^.,\n]+)/i);
+      if (termsMatch) {
+        extracted.termsForDrawing = termsMatch[1]?.trim();
+      }
     }
 
-    // Extract rating
-    const ratingMatch = message.match(/(AAA|AA\+|AA|AA-|A\+|A|A-|BBB\+|BBB|BBB-|BB\+|BB|BB-)/i);
-    if (ratingMatch) {
-      extracted.rating = ratingMatch[1].toUpperCase();
+    // Extract charges
+    if (message.toLowerCase().includes('charges') || message.toLowerCase().includes('fees')) {
+      const chargesMatch = message.match(/(?:charges|fees)[:\s]+([^.,\n]+)/i);
+      if (chargesMatch) {
+        extracted.charges = chargesMatch[1]?.trim();
+      }
     }
 
     return extracted;
@@ -107,62 +129,53 @@ export default function BankGuaranteeRegistration() {
   const generateAIResponse = (userData: Partial<BankGuaranteeData>, currentData: BankGuaranteeData): string => {
     const missingFields = [];
     
-    if (!currentData.bankName && !userData.bankName) {
-      missingFields.push('bank name');
+    if (!currentData.applicant && !userData.applicant) {
+      missingFields.push('applicant details');
     }
-    if (!currentData.guaranteeTypes?.length && !userData.guaranteeTypes?.length) {
-      missingFields.push('guarantee types offered');
+    if (!currentData.beneficiary && !userData.beneficiary) {
+      missingFields.push('beneficiary information');
     }
-    if (!currentData.maxAmount && !userData.maxAmount) {
-      missingFields.push('maximum guarantee amount');
+    if (!currentData.guarantorBank && !userData.guarantorBank) {
+      missingFields.push('guarantor bank');
     }
-    if (!currentData.swiftCode && !userData.swiftCode) {
-      missingFields.push('SWIFT/BIC code');
+    if (!currentData.guaranteeAmount && !userData.guaranteeAmount) {
+      missingFields.push('guarantee amount');
     }
     if (!currentData.currency && !userData.currency) {
-      missingFields.push('supported currencies');
+      missingFields.push('currency');
     }
-    if (!currentData.rating && !userData.rating) {
-      missingFields.push('credit rating');
-    }
-    if (!currentData.contactPerson) {
-      missingFields.push('authorized contact person');
+    if (!currentData.expiryDate && !userData.expiryDate) {
+      missingFields.push('expiry date');
     }
 
     if (Object.keys(userData).length > 0) {
-      let response = "Excellent! I\'ve identified ";
+      let response = "Great! I've captured ";
       const extractedItems = [];
       
-      if (userData.bankName) extractedItems.push(`bank: ${userData.bankName}`);
-      if (userData.guaranteeTypes) extractedItems.push(`guarantee types: ${userData.guaranteeTypes.join(', ')}`);
-      if (userData.maxAmount) extractedItems.push(`max amount: ${userData.maxAmount}`);
+      if (userData.applicant) extractedItems.push(`applicant: ${userData.applicant}`);
+      if (userData.beneficiary) extractedItems.push(`beneficiary: ${userData.beneficiary}`);
+      if (userData.guarantorBank) extractedItems.push(`guarantor bank: ${userData.guarantorBank}`);
+      if (userData.guaranteeAmount) extractedItems.push(`amount: ${userData.guaranteeAmount}`);
       if (userData.currency) extractedItems.push(`currency: ${userData.currency}`);
-      if (userData.swiftCode) extractedItems.push(`SWIFT code: ${userData.swiftCode}`);
-      if (userData.rating) extractedItems.push(`rating: ${userData.rating}`);
-      if (userData.validityPeriod) extractedItems.push(`validity: ${userData.validityPeriod}`);
+      if (userData.expiryDate) extractedItems.push(`expiry: ${userData.expiryDate}`);
+      if (userData.termsForDrawing) extractedItems.push(`terms: ${userData.termsForDrawing}`);
       
       response += extractedItems.join(', ') + ". ";
       
       if (missingFields.length > 0) {
-        response += `\n\nTo complete your bank guarantee registration, I need: ${missingFields.slice(0, 2).join(' and ')}. `;
-        
-        if (missingFields.includes('SWIFT/BIC code')) {
-          response += "What\'s your bank\'s SWIFT/BIC code for international transactions? ";
-        } else if (missingFields.includes('credit rating')) {
-          response += "What\'s your bank\'s current credit rating (Moody\'s, S&P, etc.)? ";
-        }
+        response += `\n\nTo complete your bank guarantee registration, I still need: ${missingFields.slice(0, 2).join(' and ')}. `;
       } else {
-        response += "\n\n🏦 Registration nearly complete! Just finalizing guarantee credentials.";
+        response += "\n\n✅ All required information collected! Your bank guarantee registration is complete.";
       }
       
       return response;
     }
 
     if (missingFields.length > 0) {
-      return `I understand! To proceed with the bank guarantee registration, could you provide your ${missingFields[0]}?`;
+      return `To proceed with the bank guarantee registration, could you provide the ${missingFields[0]}?`;
     }
 
-    return "Perfect! All bank guarantee information collected. Processing your financial services registration.";
+    return "Perfect! All bank guarantee information collected. Processing your registration.";
   };
 
   const sendMessage = async () => {
@@ -179,22 +192,64 @@ export default function BankGuaranteeRegistration() {
     setCurrentMessage('');
     setIsTyping(true);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       const extractedData = analyzeMessage(currentMessage);
       const newGuaranteeData = { ...guaranteeData, ...extractedData };
       
-      const totalFields = 7;
+      const totalFields = 13;
       let filledFields = 0;
-      if (newGuaranteeData.bankName) filledFields++;
-      if (newGuaranteeData.guaranteeTypes?.length) filledFields++;
-      if (newGuaranteeData.maxAmount) filledFields++;
-      if (newGuaranteeData.swiftCode) filledFields++;
+      if (newGuaranteeData.applicant) filledFields++;
+      if (newGuaranteeData.beneficiary) filledFields++;
+      if (newGuaranteeData.guarantorBank) filledFields++;
+      if (newGuaranteeData.underlyingTransactionReference) filledFields++;
+      if (newGuaranteeData.guaranteeAmount) filledFields++;
       if (newGuaranteeData.currency) filledFields++;
-      if (newGuaranteeData.rating) filledFields++;
-      if (newGuaranteeData.contactPerson) filledFields++;
+      if (newGuaranteeData.expiryDate) filledFields++;
+      if (newGuaranteeData.termsForDrawing) filledFields++;
+      if (newGuaranteeData.formOfPresentation) filledFields++;
+      if (newGuaranteeData.charges) filledFields++;
+      if (newGuaranteeData.advisingBank) filledFields++;
+      if (newGuaranteeData.governingRules) filledFields++;
+      if (newGuaranteeData.additionalConditions) filledFields++;
       
       newGuaranteeData.completeness = Math.round((filledFields / totalFields) * 100);
       setGuaranteeData(newGuaranteeData);
+
+      // If 100% complete, save to database
+      if (newGuaranteeData.completeness === 100 && user) {
+        try {
+          const { error } = await supabase
+            .from('bank_guarantees')
+            .upsert({
+              user_id: user.id,
+              applicant: newGuaranteeData.applicant,
+              beneficiary: newGuaranteeData.beneficiary,
+              guarantor_bank: newGuaranteeData.guarantorBank,
+              underlying_transaction_reference: newGuaranteeData.underlyingTransactionReference,
+              guarantee_amount: newGuaranteeData.guaranteeAmount,
+              currency: newGuaranteeData.currency,
+              expiry_date: newGuaranteeData.expiryDate,
+              terms_for_drawing: newGuaranteeData.termsForDrawing,
+              form_of_presentation: newGuaranteeData.formOfPresentation,
+              charges: newGuaranteeData.charges,
+              advising_bank: newGuaranteeData.advisingBank,
+              governing_rules: newGuaranteeData.governingRules,
+              additional_conditions: newGuaranteeData.additionalConditions,
+            }, {
+              onConflict: 'user_id'
+            });
+
+          if (error) {
+            console.error('Error saving bank guarantee data:', error);
+            toast.error('Failed to save bank guarantee data');
+          } else {
+            toast.success('Bank guarantee registration completed successfully!');
+          }
+        } catch (error) {
+          console.error('Error saving bank guarantee data:', error);
+          toast.error('Failed to save bank guarantee data');
+        }
+      }
 
       const aiResponse = generateAIResponse(extractedData, guaranteeData);
       
@@ -258,52 +313,95 @@ export default function BankGuaranteeRegistration() {
 
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${guaranteeData.bankName ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Bank Name</span>
-                  {guaranteeData.bankName && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                  <div className={`w-2 h-2 rounded-full ${guaranteeData.applicant ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Applicant</span>
+                  {guaranteeData.applicant && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${guaranteeData.guaranteeTypes?.length ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Guarantee Types</span>
-                  {guaranteeData.guaranteeTypes?.length && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                  <div className={`w-2 h-2 rounded-full ${guaranteeData.beneficiary ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Beneficiary</span>
+                  {guaranteeData.beneficiary && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${guaranteeData.maxAmount ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">Max Amount</span>
-                  {guaranteeData.maxAmount && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                  <div className={`w-2 h-2 rounded-full ${guaranteeData.guarantorBank ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Guarantor Bank</span>
+                  {guaranteeData.guarantorBank && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${guaranteeData.swiftCode ? 'bg-primary' : 'bg-muted'}`} />
-                  <span className="text-sm">SWIFT Code</span>
-                  {guaranteeData.swiftCode && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                  <div className={`w-2 h-2 rounded-full ${guaranteeData.underlyingTransactionReference ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Transaction Reference</span>
+                  {guaranteeData.underlyingTransactionReference && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${guaranteeData.guaranteeAmount ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Guarantee Amount</span>
+                  {guaranteeData.guaranteeAmount && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${guaranteeData.currency ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Currency</span>
+                  {guaranteeData.currency && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${guaranteeData.expiryDate ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Expiry Date</span>
+                  {guaranteeData.expiryDate && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${guaranteeData.termsForDrawing ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Terms for Drawing</span>
+                  {guaranteeData.termsForDrawing && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${guaranteeData.formOfPresentation ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Form of Presentation</span>
+                  {guaranteeData.formOfPresentation && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${guaranteeData.charges ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Charges</span>
+                  {guaranteeData.charges && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${guaranteeData.advisingBank ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Advising Bank</span>
+                  {guaranteeData.advisingBank && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${guaranteeData.governingRules ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Governing Rules</span>
+                  {guaranteeData.governingRules && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${guaranteeData.additionalConditions ? 'bg-primary' : 'bg-muted'}`} />
+                  <span className="text-sm">Additional Conditions</span>
+                  {guaranteeData.additionalConditions && <CheckCircle className="h-4 w-4 text-primary ml-auto" />}
                 </div>
               </div>
 
-              {guaranteeData.bankName && (
+              {guaranteeData.applicant && (
                 <div className="mt-6 pt-4 border-t border-border">
-                  <h4 className="font-medium mb-2">Bank Details:</h4>
+                  <h4 className="font-medium mb-2">Guarantee Details:</h4>
                   <div className="space-y-2 text-sm">
-                    <div><strong>Bank:</strong> {guaranteeData.bankName}</div>
-                    {guaranteeData.maxAmount && <div><strong>Max Amount:</strong> {guaranteeData.maxAmount}</div>}
+                    {guaranteeData.applicant && <div><strong>Applicant:</strong> {guaranteeData.applicant}</div>}
+                    {guaranteeData.beneficiary && <div><strong>Beneficiary:</strong> {guaranteeData.beneficiary}</div>}
+                    {guaranteeData.guarantorBank && <div><strong>Guarantor Bank:</strong> {guaranteeData.guarantorBank}</div>}
+                    {guaranteeData.guaranteeAmount && <div><strong>Amount:</strong> {guaranteeData.guaranteeAmount}</div>}
                     {guaranteeData.currency && <div><strong>Currency:</strong> {guaranteeData.currency}</div>}
-                    {guaranteeData.swiftCode && <div><strong>SWIFT:</strong> {guaranteeData.swiftCode}</div>}
-                    {guaranteeData.rating && <div><strong>Rating:</strong> {guaranteeData.rating}</div>}
-                    {guaranteeData.validityPeriod && <div><strong>Validity:</strong> {guaranteeData.validityPeriod}</div>}
-                    {guaranteeData.guaranteeTypes?.length && (
-                      <div>
-                        <strong>Services:</strong>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {guaranteeData.guaranteeTypes.map((type, idx) => (
-                            <Badge key={idx} variant="secondary" className="text-xs">
-                              {type}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    {guaranteeData.expiryDate && <div><strong>Expiry:</strong> {guaranteeData.expiryDate}</div>}
+                    {guaranteeData.underlyingTransactionReference && <div><strong>Reference:</strong> {guaranteeData.underlyingTransactionReference}</div>}
                   </div>
                 </div>
               )}
@@ -372,7 +470,7 @@ export default function BankGuaranteeRegistration() {
                     value={currentMessage}
                     onChange={(e) => setCurrentMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="Tell me about your bank guarantee services..."
+                    placeholder="Provide bank guarantee details (applicant, beneficiary, amount, etc.)..."
                     className="flex-1"
                     disabled={isTyping}
                   />

@@ -35,6 +35,66 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_guarantees: {
+        Row: {
+          additional_conditions: string | null
+          advising_bank: string | null
+          applicant: string | null
+          beneficiary: string | null
+          charges: string | null
+          created_at: string
+          currency: string | null
+          expiry_date: string | null
+          form_of_presentation: string | null
+          governing_rules: string | null
+          guarantee_amount: string | null
+          guarantor_bank: string | null
+          id: string
+          terms_for_drawing: string | null
+          underlying_transaction_reference: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          additional_conditions?: string | null
+          advising_bank?: string | null
+          applicant?: string | null
+          beneficiary?: string | null
+          charges?: string | null
+          created_at?: string
+          currency?: string | null
+          expiry_date?: string | null
+          form_of_presentation?: string | null
+          governing_rules?: string | null
+          guarantee_amount?: string | null
+          guarantor_bank?: string | null
+          id?: string
+          terms_for_drawing?: string | null
+          underlying_transaction_reference?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          additional_conditions?: string | null
+          advising_bank?: string | null
+          applicant?: string | null
+          beneficiary?: string | null
+          charges?: string | null
+          created_at?: string
+          currency?: string | null
+          expiry_date?: string | null
+          form_of_presentation?: string | null
+          governing_rules?: string | null
+          guarantee_amount?: string | null
+          guarantor_bank?: string | null
+          id?: string
+          terms_for_drawing?: string | null
+          underlying_transaction_reference?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       buyers: {
         Row: {
           additional_comments: string | null
@@ -392,41 +452,6 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
-      }
-      user_companies: {
-        Row: {
-          company_id: string
-          created_at: string
-          id: string
-          role: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          company_id: string
-          created_at?: string
-          id?: string
-          role?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          company_id?: string
-          created_at?: string
-          id?: string
-          role?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_companies_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {
