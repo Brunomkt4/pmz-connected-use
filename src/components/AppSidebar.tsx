@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Home, History, Heart, MessageSquare, Settings, Building2, ShoppingCart, Ship, Shield, CreditCard, Award, TrendingUp } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Sidebar,
   SidebarContent,
@@ -30,8 +31,14 @@ const menuItems = [
 export function AppSidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
+  const { user } = useAuth();
 
   const isActive = (path: string) => currentPath === path;
+
+  // Filter out home item if user is logged in
+  const filteredMenuItems = user 
+    ? menuItems.filter(item => item.id !== "home")
+    : menuItems;
 
   return (
     <Sidebar
@@ -42,7 +49,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-2">
-              {menuItems.map((item) => {
+              {filteredMenuItems.map((item) => {
                 const Icon = item.icon;
                 return (
                   <SidebarMenuItem key={item.id}>
