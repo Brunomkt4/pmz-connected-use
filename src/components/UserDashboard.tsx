@@ -161,23 +161,25 @@ const UserDashboard = () => {
           </Card>
         )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Search</CardTitle>
-            <CardDescription>
-              Find products and services on the platform
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/search')}
-              className="w-full"
-            >
-              Start Searching
-            </Button>
-          </CardContent>
-        </Card>
+        {profile?.account_type_id === 2 && ( // Only show for buyers
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Search</CardTitle>
+              <CardDescription>
+                Find products and services on the platform
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/search')}
+                className="w-full"
+              >
+                Start Searching
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>
