@@ -159,11 +159,53 @@ export default function BankGuaranteeRegistration() {
     }
 
     // Extract amounts and currency
-    const amountMatch = message.match(/\$?(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:million|m|billion|b|thousand|k)?\s*(USD|EUR|GBP|JPY|CAD|AUD)?/i);
+    const amountMatch = message.match(/\$?(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:million|m|billion|b|thousand|k)?\s*(USD|EUR|GBP|JPY|CAD|AUD|BRL|CNY|INR|AED|SAR)?/i);
     if (amountMatch) {
       extracted.guaranteeAmount = amountMatch[0];
       if (amountMatch[2]) {
         extracted.currency = amountMatch[2].toUpperCase();
+      }
+    }
+
+    // Extract currency separately - more flexible pattern
+    const currencyPatterns = [
+      // Pattern 1: Currency mentioned with keywords
+      /(?:currency|in|denominated in|payable in)[\s:]*([A-Z]{3}|USD|EUR|GBP|JPY|CAD|AUD|BRL|CNY|INR|AED|SAR|CHF|SEK|NOK|DKK)/i,
+      // Pattern 2: Direct currency codes
+      /\b(USD|EUR|GBP|JPY|CAD|AUD|BRL|CNY|INR|AED|SAR|CHF|SEK|NOK|DKK)\b/i,
+      // Pattern 3: Currency names
+      /\b(dollar|dollars|euro|euros|pound|pounds|yen|real|reais|yuan|rupee|rupees|dirham|riyal|franc|krona|krone)\b/i,
+      // Pattern 4: Currency symbols context
+      /\$\s*(?:US|USD|American)|€\s*(?:EUR|Euro)|£\s*(?:GBP|Sterling)|¥\s*(?:JPY|Yen)|R\$\s*(?:BRL|Real)/i
+    ];
+    
+    for (const pattern of currencyPatterns) {
+      const match = message.match(pattern);
+      if (match && !extracted.currency) { // Only set if not already extracted
+        let currency = match[1]?.toUpperCase();
+        
+        // Convert currency names to codes
+        const currencyMap: { [key: string]: string } = {
+          'DOLLAR': 'USD', 'DOLLARS': 'USD',
+          'EURO': 'EUR', 'EUROS': 'EUR',
+          'POUND': 'GBP', 'POUNDS': 'GBP',
+          'YEN': 'JPY',
+          'REAL': 'BRL', 'REAIS': 'BRL',
+          'YUAN': 'CNY',
+          'RUPEE': 'INR', 'RUPEES': 'INR',
+          'DIRHAM': 'AED',
+          'RIYAL': 'SAR',
+          'FRANC': 'CHF',
+          'KRONA': 'SEK',
+          'KRONE': 'NOK'
+        };
+        
+        if (currencyMap[currency]) {
+          currency = currencyMap[currency];
+        }
+        
+        extracted.currency = currency;
+        break;
       }
     }
 
