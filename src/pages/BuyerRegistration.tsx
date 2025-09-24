@@ -76,6 +76,7 @@ export default function BuyerRegistration() {
     }
 
     try {
+      console.log('Saving buyer data', data);
       // Save basic company information to companies table
       const companyData = {
         name: data.companyName || '',
@@ -113,6 +114,10 @@ export default function BuyerRegistration() {
       if (companyError) throw companyError;
 
       // Save buyer-specific information to buyers table
+      // Guard date parsing to avoid invalid date errors
+      const parsedDate = data.requiredDeliveryDate ? new Date(data.requiredDeliveryDate) : null;
+      const isoDate = parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate.toISOString().split('T')[0] : null;
+
       const buyerData = {
         name: data.companyName || '',
         email: data.email,
@@ -125,7 +130,7 @@ export default function BuyerRegistration() {
         target_price: data.targetPrice,
         delivery_destination: data.deliveryDestination,
         delivery_conditions: data.deliveryConditions,
-        required_delivery_date: data.requiredDeliveryDate ? new Date(data.requiredDeliveryDate).toISOString().split('T')[0] : null,
+        required_delivery_date: isoDate,
         preferred_payment_method: data.preferredPaymentMethod,
         financing_needs: data.financingNeeds,
         certification_requirements: data.certificationRequirements,
@@ -135,7 +140,6 @@ export default function BuyerRegistration() {
         additional_comments: data.additionalComments,
         user_id: user.id
       };
-
       // Check for existing buyer and handle upsert manually
       const { data: existingBuyer, error: existsErr } = await supabase
         .from('buyers')
@@ -163,9 +167,9 @@ export default function BuyerRegistration() {
       setIsRegistrationComplete(true);
       setShowCompletionSheet(true);
       toast.success('Buyer registration completed successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving buyer data:', error);
-      toast.error('Failed to save buyer data. Please try again.');
+      toast.error(`Failed to save buyer data: ${error?.message || 'Please try again.'}`);
     }
   };
 
