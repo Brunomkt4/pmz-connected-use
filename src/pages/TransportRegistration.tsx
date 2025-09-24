@@ -268,15 +268,9 @@ export default function TransportRegistration() {
   const generateAIResponse = (userData: Partial<TransportData>, currentData: TransportData): string => {
     const missingFields = [];
     
-    // Basic company info
+    // Basic company info (only company name required)
     if (!currentData.companyName && !userData.companyName) {
       missingFields.push('company name');
-    }
-    if (!currentData.phone && !userData.phone) {
-      missingFields.push('contact phone');
-    }
-    if (!currentData.email && !userData.email) {
-      missingFields.push('email address');
     }
     
     // 12 required transport fields
@@ -327,12 +321,6 @@ export default function TransportRegistration() {
         // Add specific prompts for each field type
         switch (missingFields[0]) {
           case 'company name':
-            response += ".";
-            break;
-          case 'contact phone':
-            response += " number.";
-            break;
-          case 'email address':
             response += ".";
             break;
           case 'vehicle fleet details':
@@ -416,13 +404,11 @@ export default function TransportRegistration() {
       const extractedData = analyzeMessage(currentMessage);
       const newTransportData = { ...transportData, ...extractedData };
       
-      // Calculate completeness - 15 required fields (3 basic + 12 transport fields)
-      const totalFields = 15;
+      // Calculate completeness - 13 required fields (1 basic + 12 transport fields)
+      const totalFields = 13;
       let filledFields = 0;
-      // Basic info (3 fields)
+      // Basic info (1 field)
       if (newTransportData.companyName) filledFields++;
-      if (newTransportData.phone) filledFields++;
-      if (newTransportData.email) filledFields++;
       // 12 transport fields
       if (newTransportData.vehicleTypes?.length) filledFields++;
       if (newTransportData.serviceAreas?.length) filledFields++;
