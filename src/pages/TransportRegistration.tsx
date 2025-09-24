@@ -73,13 +73,24 @@ export default function TransportRegistration() {
     }
 
     try {
+      // Resolve correct account_type_id for Carrier dynamically to avoid mismatches
+      const { data: carrierType, error: typeErr } = await supabase
+        .from('account_types')
+        .select('id')
+        .eq('name', 'Carrier / Transportation Company')
+        .maybeSingle();
+
+      if (typeErr) throw typeErr;
+
+      const carrierTypeId = carrierType?.id ?? 4; // Fallback to 4 if lookup fails
+
       // Save basic company information to companies table
       const companyData = {
         name: data.companyName || '',
-        email: data.email,
-        phone: data.phone,
-        address: data.address,
-        account_type_id: 4, // Carrier/Transportation Company account type
+        email: data.email ?? null,
+        phone: data.phone ?? null,
+        address: data.address ?? null,
+        account_type_id: carrierTypeId,
         user_id: user.id
       };
 
@@ -88,6 +99,8 @@ export default function TransportRegistration() {
         .upsert(companyData, {
           onConflict: 'user_id'
         });
+
+      console.log('Saving companyData', companyData);
 
       if (companyError) throw companyError;
 
