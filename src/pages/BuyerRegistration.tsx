@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useNavigate } from "react-router-dom";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -57,6 +58,7 @@ export default function BuyerRegistration() {
   const [isTyping, setIsTyping] = useState(false);
   const [buyerData, setBuyerData] = useState<BuyerData>({ completeness: 0 });
   const [isRegistrationComplete, setIsRegistrationComplete] = useState(false);
+  const [showCompletionSheet, setShowCompletionSheet] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -84,11 +86,29 @@ export default function BuyerRegistration() {
         user_id: user.id
       };
 
-      const { error: companyError } = await supabase
+      // Check for existing company and handle upsert manually
+      const { data: existingCompany, error: companyExistsErr } = await supabase
         .from('companies')
-        .upsert(companyData, {
-          onConflict: 'user_id'
-        });
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (companyExistsErr) throw companyExistsErr;
+
+      let companyError = null as unknown as { message?: string } | null;
+      if (existingCompany?.id) {
+        const { error } = await supabase
+          .from('companies')
+          .update(companyData)
+          .eq('id', existingCompany.id);
+        companyError = error;
+      } else {
+        const { error } = await supabase
+          .from('companies')
+          .insert(companyData);
+        companyError = error;
+      }
+
+      if (companyError) throw companyError;
 
       if (companyError) throw companyError;
 
@@ -141,6 +161,7 @@ export default function BuyerRegistration() {
       if (buyerError) throw buyerError;
 
       setIsRegistrationComplete(true);
+      setShowCompletionSheet(true);
       toast.success('Buyer registration completed successfully!');
     } catch (error) {
       console.error('Error saving buyer data:', error);
@@ -765,6 +786,35 @@ export default function BuyerRegistration() {
             </Card>
           </div>
         </div>
+
+        {/* Completion Sheet */}
+        <Sheet open={showCompletionSheet} onOpenChange={setShowCompletionSheet}>
+          <SheetContent side="right" className="w-full sm:max-w-md">
+            <SheetHeader>
+              <SheetTitle>Buyer registration saved</SheetTitle>
+              <SheetDescription>Here’s a summary of your information.</SheetDescription>
+            </SheetHeader>
+            <div className="mt-4 space-y-2 text-sm">
+              {buyerData.companyName && <div><strong>Company:</strong> {buyerData.companyName}</div>}
+              {buyerData.contactPerson && <div><strong>Contact:</strong> {buyerData.contactPerson}</div>}
+              {buyerData.productRequirements?.length ? <div><strong>Products:</strong> {buyerData.productRequirements.join(', ')}</div> : null}
+              {buyerData.quantityRequired && <div><strong>Quantity:</strong> {buyerData.quantityRequired}</div>}
+              {buyerData.targetPrice && <div><strong>Target Price:</strong> {buyerData.targetPrice}</div>}
+              {buyerData.deliveryDestination && <div><strong>Destination:</strong> {buyerData.deliveryDestination}</div>}
+              {buyerData.requiredDeliveryDate && <div><strong>Delivery Date:</strong> {buyerData.requiredDeliveryDate}</div>}
+              {buyerData.preferredPaymentMethod && <div><strong>Payment:</strong> {buyerData.preferredPaymentMethod}</div>}
+              {buyerData.financingNeeds && <div><strong>Financing:</strong> {buyerData.financingNeeds}</div>}
+              {buyerData.certificationRequirements?.length ? <div><strong>Certifications:</strong> {buyerData.certificationRequirements.join(', ')}</div> : null}
+              {buyerData.insuranceRequirements && <div><strong>Insurance:</strong> {buyerData.insuranceRequirements}</div>}
+              {(buyerData.bankGuaranteeDetails || buyerData.letterOfCreditDetails) && <div><strong>Bank/L/C:</strong> Yes</div>}
+              {buyerData.additionalComments && <div><strong>Comments:</strong> {buyerData.additionalComments}</div>}
+            </div>
+            <div className="mt-6 flex gap-2">
+              <Button onClick={() => setShowCompletionSheet(false)} className="bg-gradient-button text-white">Close</Button>
+              <Button variant="outline" onClick={() => navigate('/')}>Go to Home</Button>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </div>
   );
