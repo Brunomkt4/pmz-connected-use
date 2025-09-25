@@ -9,7 +9,7 @@ All colors MUST be HSL.
 @layer base {
   :root {
     /* Brand Colors Applied with Soft Gradients */
-    --background: 210 25% 98%;
+    --background: 210 40% 95%;
     --foreground: 220 15% 20%;
 
     --card: 0 0% 100%;
