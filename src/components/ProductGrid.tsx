@@ -24,7 +24,7 @@ const products: Product[] = [
   {
     id: "1",
     name: "Frozen Pork Whole Ears",
-    image: "/lovable-uploads/pork-leg.jpg",
+    image: "/assets/Asset_Carne.png",
     price: "€ 1,85",
     seller: "MeatBorsa",
     sellerEmail: "contact@meatborsa.com",
@@ -36,7 +36,7 @@ const products: Product[] = [
   {
     id: "2",
     name: "Frozen Pork 70/30 Trimmings",
-    image: "/lovable-uploads/pork-ribs.jpg",
+    image: "/assets/Asset_Carne.png",
     price: "€ 2,05",
     seller: "MeatBorsa", 
     sellerEmail: "contact@meatborsa.com",
@@ -48,7 +48,7 @@ const products: Product[] = [
   {
     id: "3",
     name: "Frozen Chicken Leg Quarter",
-    image: "/lovable-uploads/chicken-breast.jpg",
+    image: "/assets/Asset_Frango.png",
     price: "€ 1,65",
     seller: "MeatBorsa",
     sellerEmail: "contact@meatborsa.com", 
@@ -60,7 +60,7 @@ const products: Product[] = [
   {
     id: "4",
     name: "CLQ B-grade",
-    image: "/lovable-uploads/whole-chicken.jpg",
+    image: "/assets/Asset_Frango.png",
     price: "€ 1,15",
     seller: "GenbαFood",
     sellerEmail: "info@genbafood.com",
@@ -71,7 +71,7 @@ const products: Product[] = [
   {
     id: "5",
     name: "Frozen Duck Carcass 1.5-2kg",
-    image: "/lovable-uploads/whole-chicken.jpg",
+    image: "/assets/Asset_Peru.png",
     price: "€ 2,32",
     seller: "karpatαplan@gmail.com",
     sellerEmail: "karpatαplan@gmail.com",
@@ -82,7 +82,7 @@ const products: Product[] = [
   {
     id: "6",
     name: "Frozen Female Turkey Breast Fillet Class A",
-    image: "/lovable-uploads/chicken-breast.jpg",
+    image: "/assets/Asset_Peru.png",
     price: "€ 8,15",
     seller: "Frostmeat Global Sp.z.o.o.",
     sellerEmail: "info@frostmeat.com",
@@ -93,7 +93,7 @@ const products: Product[] = [
   {
     id: "7",
     name: "Pork Fat Pork Lard",
-    image: "/lovable-uploads/pork-leg.jpg",
+    image: "/assets/Asset_Carne.png",
     priceOnRequest: true,
     seller: "Oshropol",
     sellerEmail: "info@oshropol.com",
@@ -104,7 +104,7 @@ const products: Product[] = [
   {
     id: "8",
     name: "10t / weekly fresh pork silverside",
-    image: "/lovable-uploads/beef-alcatra.jpg",
+    image: "/assets/Asset_Carne.png",
     price: "€ 3,98",
     seller: "Anmex",
     sellerEmail: "info@anmex.com",
@@ -115,7 +115,7 @@ const products: Product[] = [
   {
     id: "9",
     name: "Fresh halal poultry from hand slaughter",
-    image: "/lovable-uploads/whole-chicken.jpg",
+    image: "/assets/Asset_Frango.png",
     priceOnRequest: true,
     seller: "jaroslav@acefoodservice.co.uk",
     sellerEmail: "jaroslav@acefoodservice.co.uk", 
@@ -126,7 +126,7 @@ const products: Product[] = [
   {
     id: "10",
     name: "Ribeye / rib steak - Ribeye, Lip-On",
-    image: "/lovable-uploads/beef-picanha.jpg",
+    image: "/assets/Asset_Boi.png",
     priceOnRequest: true,
     seller: "Kazbeef",
     sellerEmail: "info@kazbeef.com",
@@ -137,7 +137,7 @@ const products: Product[] = [
   {
     id: "11",
     name: "Belly grade A boneless",
-    image: "/lovable-uploads/pork-ribs.jpg",
+    image: "/assets/Asset_Costela.png",
     price: "€ 3,40",
     seller: "MARK'S Marszałkowscy",
     sellerEmail: "info@marks.com",
@@ -148,7 +148,7 @@ const products: Product[] = [
   {
     id: "12",
     name: "Pork back fat",
-    image: "/lovable-uploads/pork-leg.jpg",
+    image: "/assets/Asset_Carne.png",
     price: "€ 0,90",
     seller: "BUYMEAT.pl",
     sellerEmail: "info@buymeat.pl",
@@ -159,7 +159,7 @@ const products: Product[] = [
   {
     id: "13",
     name: "Premium Lamb Leg",
-    image: "/lovable-uploads/lamb-leg.jpg",
+    image: "/assets/Asset_Carne.png",
     price: "€ 6,45",
     seller: "Alpine Meats",
     sellerEmail: "info@alpinemeats.com",
@@ -171,7 +171,7 @@ const products: Product[] = [
   {
     id: "14",
     name: "Artisan Sausages Mixed Pack",
-    image: "/lovable-uploads/artisan-sausages.jpg",
+    image: "/assets/Asset_Carne.png",
     price: "€ 4,20",
     seller: "European Delicatessen",
     sellerEmail: "orders@eurodel.com",
@@ -182,7 +182,7 @@ const products: Product[] = [
   {
     id: "15",
     name: "Grass-Fed Beef Alcatra",
-    image: "/lovable-uploads/beef-alcatra.jpg",
+    image: "/assets/Asset_Boi.png",
     price: "€ 9,80",
     seller: "Pampa Premium",
     sellerEmail: "sales@pampapremium.com",
@@ -194,7 +194,7 @@ const products: Product[] = [
   {
     id: "16",
     name: "Organic Free-Range Chicken",
-    image: "/lovable-uploads/whole-chicken.jpg",
+    image: "/assets/Asset_Frango.png",
     priceOnRequest: true,
     seller: "Farm Fresh Organics",
     sellerEmail: "contact@farmfreshorg.com",
