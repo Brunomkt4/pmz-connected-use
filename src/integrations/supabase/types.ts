@@ -14,7 +14,319 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      account_types: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: number
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      bank_guarantees: {
+        Row: {
+          amendments: string | null
+          applicable_law: string | null
+          applicant: string
+          beneficiary: string
+          created_at: string | null
+          currency: string
+          dispute_resolution: string | null
+          expiry_date: string
+          guarantee_amount: string
+          guarantor_bank: string
+          id: string
+          status: string | null
+          terms_for_drawing: string | null
+          underlying_transaction_reference: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amendments?: string | null
+          applicable_law?: string | null
+          applicant: string
+          beneficiary: string
+          created_at?: string | null
+          currency: string
+          dispute_resolution?: string | null
+          expiry_date: string
+          guarantee_amount: string
+          guarantor_bank: string
+          id?: string
+          status?: string | null
+          terms_for_drawing?: string | null
+          underlying_transaction_reference?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amendments?: string | null
+          applicable_law?: string | null
+          applicant?: string
+          beneficiary?: string
+          created_at?: string | null
+          currency?: string
+          dispute_resolution?: string | null
+          expiry_date?: string
+          guarantee_amount?: string
+          guarantor_bank?: string
+          id?: string
+          status?: string | null
+          terms_for_drawing?: string | null
+          underlying_transaction_reference?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      buyers: {
+        Row: {
+          address: string
+          business_number: string | null
+          certification_requirements: string[] | null
+          contact_person: string | null
+          created_at: string | null
+          delivery_schedule: string | null
+          delivery_terms: string | null
+          email: string
+          id: string
+          import_licenses: string[] | null
+          name: string
+          payment_terms: string | null
+          phone: string
+          preferred_origins: string[] | null
+          product_requirements: string[] | null
+          quality_requirements: string[] | null
+          quantity_required: string | null
+          target_price: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          address: string
+          business_number?: string | null
+          certification_requirements?: string[] | null
+          contact_person?: string | null
+          created_at?: string | null
+          delivery_schedule?: string | null
+          delivery_terms?: string | null
+          email: string
+          id?: string
+          import_licenses?: string[] | null
+          name: string
+          payment_terms?: string | null
+          phone: string
+          preferred_origins?: string[] | null
+          product_requirements?: string[] | null
+          quality_requirements?: string[] | null
+          quantity_required?: string | null
+          target_price?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          address?: string
+          business_number?: string | null
+          certification_requirements?: string[] | null
+          contact_person?: string | null
+          created_at?: string | null
+          delivery_schedule?: string | null
+          delivery_terms?: string | null
+          email?: string
+          id?: string
+          import_licenses?: string[] | null
+          name?: string
+          payment_terms?: string | null
+          phone?: string
+          preferred_origins?: string[] | null
+          product_requirements?: string[] | null
+          quality_requirements?: string[] | null
+          quantity_required?: string | null
+          target_price?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      companies: {
+        Row: {
+          account_type_id: number | null
+          address: string
+          cnpj: string | null
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          phone: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          account_type_id?: number | null
+          address: string
+          cnpj?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          name: string
+          phone: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          account_type_id?: number | null
+          address?: string
+          cnpj?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          phone?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "companies_account_type_id_fkey"
+            columns: ["account_type_id"]
+            isOneToOne: false
+            referencedRelation: "account_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          account_type_id: number | null
+          created_at: string | null
+          date_format: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          language: string | null
+          notifications_enabled: boolean | null
+          phone: string | null
+          timezone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_type_id?: number | null
+          created_at?: string | null
+          date_format?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          language?: string | null
+          notifications_enabled?: boolean | null
+          phone?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_type_id?: number | null
+          created_at?: string | null
+          date_format?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          language?: string | null
+          notifications_enabled?: boolean | null
+          phone?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_account_type_id_fkey"
+            columns: ["account_type_id"]
+            isOneToOne: false
+            referencedRelation: "account_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          address: string
+          available_certifications: string[] | null
+          cnpj: string
+          contact_person: string | null
+          created_at: string | null
+          email: string
+          export_experience: string | null
+          geographical_focus: string[] | null
+          id: string
+          lead_time: string | null
+          minimum_order_quantity: string | null
+          name: string
+          phone: string
+          product_types: string[] | null
+          production_capacity: string | null
+          products: string[] | null
+          quality_standards: string[] | null
+          sif_registration: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          address: string
+          available_certifications?: string[] | null
+          cnpj: string
+          contact_person?: string | null
+          created_at?: string | null
+          email: string
+          export_experience?: string | null
+          geographical_focus?: string[] | null
+          id?: string
+          lead_time?: string | null
+          minimum_order_quantity?: string | null
+          name: string
+          phone: string
+          product_types?: string[] | null
+          production_capacity?: string | null
+          products?: string[] | null
+          quality_standards?: string[] | null
+          sif_registration?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          address?: string
+          available_certifications?: string[] | null
+          cnpj?: string
+          contact_person?: string | null
+          created_at?: string | null
+          email?: string
+          export_experience?: string | null
+          geographical_focus?: string[] | null
+          id?: string
+          lead_time?: string | null
+          minimum_order_quantity?: string | null
+          name?: string
+          phone?: string
+          product_types?: string[] | null
+          production_capacity?: string | null
+          products?: string[] | null
+          quality_standards?: string[] | null
+          sif_registration?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
