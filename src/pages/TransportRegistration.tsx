@@ -73,7 +73,9 @@ export default function TransportRegistration() {
     }
 
     try {
-      // Resolve correct account_type_id for Carrier dynamically to avoid mismatches
+      console.log('Saving carrier data', data);
+      
+      // Resolve correct account_type_id for Carrier
       const { data: carrierType, error: typeErr } = await supabase
         .from('account_types')
         .select('id')
@@ -81,78 +83,89 @@ export default function TransportRegistration() {
         .maybeSingle();
 
       if (typeErr) throw typeErr;
+      const carrierTypeId = carrierType?.id ?? 3;
 
-      const carrierTypeId = carrierType?.id ?? 4; // Fallback to 4 if lookup fails
-
-      // Save basic company information to companies table
+      // First, ensure company exists or update it
       const companyData = {
         name: data.companyName || '',
-        email: data.email ?? null,
-        phone: data.phone ?? null,
-        address: data.address ?? null,
+        email: data.email || '',
+        phone: data.phone || '',
+        address: data.address || '',
         account_type_id: carrierTypeId,
         user_id: user.id
       };
 
-      const { error: companyError } = await supabase
+      // Check for existing company
+      const { data: existingCompany, error: companyExistsErr } = await supabase
         .from('companies')
-        .upsert(companyData, {
-          onConflict: 'user_id'
-        });
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (companyExistsErr) throw companyExistsErr;
 
-      console.log('Saving companyData', companyData);
+      if (existingCompany?.id) {
+        const { error } = await supabase
+          .from('companies')
+          .update(companyData)
+          .eq('id', existingCompany.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('companies')
+          .insert(companyData);
+        if (error) throw error;
+      }
 
-      if (companyError) throw companyError;
-
-      // Save carrier-specific information to carriers table
+      // Now save carrier-specific information to carriers table
       const carrierData = {
         company_name: data.companyName || '',
-        license_number: data.licenseNumber,
-        phone: data.phone,
-        email: data.email,
-        address: data.address,
-        vehicle_types: data.vehicleTypes,
-        capacity: data.capacity,
-        service_areas: data.serviceAreas,
-        certifications: data.certifications,
-        insurance_details: data.insurance,
+        license_number: data.licenseNumber || null,
+        phone: data.phone || null,
+        email: data.email || null,
+        address: data.address || null,
+        vehicle_types: data.vehicleTypes || [],
+        capacity: data.capacity || null,
+        service_areas: data.serviceAreas || [],
+        certifications: data.certifications || [],
+        insurance_details: data.insurance || null,
         temperature_control: data.temperatureControl || false,
-        mode_of_transport: data.modeOfTransport,
-        origin_destinations: data.originDestinations,
-        estimated_transit_time: data.estimatedTransitTime,
-        shipment_schedule: data.shipmentSchedule,
-        container_details: data.containerDetails,
-        freight_cost: data.freightCost,
-        included_services: data.includedServices,
-        documents_compliance: data.documentsCompliance,
-        tracking_support_details: data.trackingSupportDetails,
-        special_requirements: data.specialRequirements,
+        mode_of_transport: data.modeOfTransport || [],
+        origin_destinations: data.originDestinations || [],
+        estimated_transit_time: data.estimatedTransitTime || null,
+        shipment_schedule: data.shipmentSchedule || null,
+        container_details: data.containerDetails || null,
+        freight_cost: data.freightCost || null,
+        included_services: data.includedServices || [],
+        documents_compliance: data.documentsCompliance || [],
+        tracking_support_details: data.trackingSupportDetails || null,
+        special_requirements: data.specialRequirements || null,
         user_id: user.id
       };
 
-      // Upsert requires a unique constraint; since carriers.user_id isn't unique, do insert/update manually
+      // Check for existing carrier
       const { data: existingCarrier, error: existsErr } = await supabase
         .from('carriers')
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle();
+      
       if (existsErr) throw existsErr;
 
-      let carrierError = null as unknown as { message?: string } | null;
       if (existingCarrier?.id) {
         const { error } = await supabase
           .from('carriers')
           .update(carrierData)
           .eq('id', existingCarrier.id);
-        carrierError = error;
+        if (error) throw error;
+        console.log('Carrier data updated successfully');
       } else {
         const { error } = await supabase
           .from('carriers')
           .insert(carrierData);
-        carrierError = error;
+        if (error) throw error;
+        console.log('Carrier data inserted successfully');
       }
-
-      if (carrierError) throw carrierError;
 
       setIsRegistrationComplete(true);
       toast.success('Transport registration completed successfully!');

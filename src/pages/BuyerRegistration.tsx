@@ -77,92 +77,89 @@ export default function BuyerRegistration() {
 
     try {
       console.log('Saving buyer data', data);
-      // Save basic company information to companies table
+      
+      // First, ensure company exists or update it
       const companyData = {
         name: data.companyName || '',
-        email: data.email,
-        phone: data.phone,
-        address: data.address,
+        email: data.email || '',
+        phone: data.phone || '',
+        address: data.address || '',
         account_type_id: 2, // Buyer account type
         user_id: user.id
       };
 
-      // Check for existing company and handle upsert manually
+      // Check for existing company
       const { data: existingCompany, error: companyExistsErr } = await supabase
         .from('companies')
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle();
+      
       if (companyExistsErr) throw companyExistsErr;
 
-      let companyError = null as unknown as { message?: string } | null;
       if (existingCompany?.id) {
         const { error } = await supabase
           .from('companies')
           .update(companyData)
           .eq('id', existingCompany.id);
-        companyError = error;
+        if (error) throw error;
       } else {
         const { error } = await supabase
           .from('companies')
           .insert(companyData);
-        companyError = error;
+        if (error) throw error;
       }
 
-      if (companyError) throw companyError;
-
-      if (companyError) throw companyError;
-
-      // Save buyer-specific information to buyers table
-      // Guard date parsing to avoid invalid date errors
+      // Now save buyer-specific information to buyers table
       const parsedDate = data.requiredDeliveryDate ? new Date(data.requiredDeliveryDate) : null;
       const isoDate = parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate.toISOString().split('T')[0] : null;
 
       const buyerData = {
         name: data.companyName || '',
-        email: data.email,
-        phone: data.phone,
-        address: data.address,
-        business_number: data.businessNumber,
-        contact_person: data.contactPerson,
-        product_requirements: data.productRequirements,
-        quantity_required: data.quantityRequired,
-        target_price: data.targetPrice,
-        delivery_destination: data.deliveryDestination,
-        delivery_conditions: data.deliveryConditions,
+        email: data.email || '',
+        phone: data.phone || '',
+        address: data.address || '',
+        business_number: data.businessNumber || null,
+        contact_person: data.contactPerson || null,
+        product_requirements: data.productRequirements || [],
+        quantity_required: data.quantityRequired || null,
+        target_price: data.targetPrice || null,
+        delivery_destination: data.deliveryDestination || null,
+        delivery_conditions: data.deliveryConditions || null,
         required_delivery_date: isoDate,
-        preferred_payment_method: data.preferredPaymentMethod,
-        financing_needs: data.financingNeeds,
-        certification_requirements: data.certificationRequirements,
-        insurance_requirements: data.insuranceRequirements,
-        bank_guarantee_details: data.bankGuaranteeDetails,
-        letter_of_credit_details: data.letterOfCreditDetails,
-        additional_comments: data.additionalComments,
+        preferred_payment_method: data.preferredPaymentMethod || null,
+        financing_needs: data.financingNeeds || null,
+        certification_requirements: data.certificationRequirements || [],
+        insurance_requirements: data.insuranceRequirements || null,
+        bank_guarantee_details: data.bankGuaranteeDetails || null,
+        letter_of_credit_details: data.letterOfCreditDetails || null,
+        additional_comments: data.additionalComments || null,
         user_id: user.id
       };
-      // Check for existing buyer and handle upsert manually
+      
+      // Check for existing buyer
       const { data: existingBuyer, error: existsErr } = await supabase
         .from('buyers')
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle();
+      
       if (existsErr) throw existsErr;
 
-      let buyerError = null as unknown as { message?: string } | null;
       if (existingBuyer?.id) {
         const { error } = await supabase
           .from('buyers')
           .update(buyerData)
           .eq('id', existingBuyer.id);
-        buyerError = error;
+        if (error) throw error;
+        console.log('Buyer data updated successfully');
       } else {
         const { error } = await supabase
           .from('buyers')
           .insert(buyerData);
-        buyerError = error;
+        if (error) throw error;
+        console.log('Buyer data inserted successfully');
       }
-
-      if (buyerError) throw buyerError;
 
       setIsRegistrationComplete(true);
       setShowCompletionSheet(true);
