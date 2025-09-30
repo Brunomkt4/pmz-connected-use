@@ -161,6 +161,90 @@ export type Database = {
         }
         Relationships: []
       }
+      carriers: {
+        Row: {
+          address: string | null
+          capacity: string | null
+          certifications: string[] | null
+          company_name: string
+          container_details: string | null
+          created_at: string | null
+          documents_compliance: string[] | null
+          email: string | null
+          estimated_transit_time: string | null
+          freight_cost: string | null
+          id: string
+          included_services: string[] | null
+          insurance_details: string | null
+          license_number: string | null
+          mode_of_transport: string[] | null
+          origin_destinations: string[] | null
+          phone: string | null
+          service_areas: string[] | null
+          shipment_schedule: string | null
+          special_requirements: string | null
+          temperature_control: boolean | null
+          tracking_support_details: string | null
+          updated_at: string | null
+          user_id: string | null
+          vehicle_types: string[] | null
+        }
+        Insert: {
+          address?: string | null
+          capacity?: string | null
+          certifications?: string[] | null
+          company_name: string
+          container_details?: string | null
+          created_at?: string | null
+          documents_compliance?: string[] | null
+          email?: string | null
+          estimated_transit_time?: string | null
+          freight_cost?: string | null
+          id?: string
+          included_services?: string[] | null
+          insurance_details?: string | null
+          license_number?: string | null
+          mode_of_transport?: string[] | null
+          origin_destinations?: string[] | null
+          phone?: string | null
+          service_areas?: string[] | null
+          shipment_schedule?: string | null
+          special_requirements?: string | null
+          temperature_control?: boolean | null
+          tracking_support_details?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          vehicle_types?: string[] | null
+        }
+        Update: {
+          address?: string | null
+          capacity?: string | null
+          certifications?: string[] | null
+          company_name?: string
+          container_details?: string | null
+          created_at?: string | null
+          documents_compliance?: string[] | null
+          email?: string | null
+          estimated_transit_time?: string | null
+          freight_cost?: string | null
+          id?: string
+          included_services?: string[] | null
+          insurance_details?: string | null
+          license_number?: string | null
+          mode_of_transport?: string[] | null
+          origin_destinations?: string[] | null
+          phone?: string | null
+          service_areas?: string[] | null
+          shipment_schedule?: string | null
+          special_requirements?: string | null
+          temperature_control?: boolean | null
+          tracking_support_details?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          vehicle_types?: string[] | null
+        }
+        Relationships: []
+      }
       companies: {
         Row: {
           account_type_id: number | null
