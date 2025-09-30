@@ -70,6 +70,11 @@ export function RoleBasedSidebar() {
 
   const visibleMenuItems = getVisibleMenuItems();
 
+  // Don't render sidebar at all if user is not logged in
+  if (!profile && !loading) {
+    return null;
+  }
+
   // Show loading state
   if (loading) {
     return (
