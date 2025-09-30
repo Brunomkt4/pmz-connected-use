@@ -45,23 +45,23 @@ export function RoleBasedSidebar() {
 
   // Filter menu items based on account type and logged in status
   const getVisibleMenuItems = () => {
-    let filteredItems = allMenuItems;
-    
-    // Remove home item if user is logged in
-    if (profile) {
-      filteredItems = filteredItems.filter(item => item.id !== "home");
+    // If user is not logged in, show ONLY Home
+    if (!profile) {
+      return allMenuItems.filter(item => item.id === "home");
     }
     
-    // CRITICAL: Only show items allowed for the user's account type
-    // If profile is not loaded yet or account_type_id is missing, show only universal items
-    if (profile?.account_type_id) {
+    // User is logged in - remove home and filter by account type
+    let filteredItems = allMenuItems.filter(item => item.id !== "home");
+    
+    // Filter by account type if available
+    if (profile.account_type_id) {
       filteredItems = filteredItems.filter(item => 
         item.allowedAccountTypes.includes(profile.account_type_id)
       );
-    } else if (profile) {
-      // If logged in but account_type_id not loaded, show only common items that all users can access
+    } else {
+      // If logged in but account_type_id not loaded, show only universal items
       filteredItems = filteredItems.filter(item => 
-        item.allowedAccountTypes.length === 6 // Items available to all account types
+        item.allowedAccountTypes.length === 6
       );
     }
     
