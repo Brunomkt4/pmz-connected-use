@@ -52,10 +52,16 @@ export function RoleBasedSidebar() {
       filteredItems = filteredItems.filter(item => item.id !== "home");
     }
     
-    // Filter by account type if profile is available
+    // CRITICAL: Only show items allowed for the user's account type
+    // If profile is not loaded yet or account_type_id is missing, show only universal items
     if (profile?.account_type_id) {
       filteredItems = filteredItems.filter(item => 
         item.allowedAccountTypes.includes(profile.account_type_id)
+      );
+    } else if (profile) {
+      // If logged in but account_type_id not loaded, show only common items that all users can access
+      filteredItems = filteredItems.filter(item => 
+        item.allowedAccountTypes.length === 6 // Items available to all account types
       );
     }
     
