@@ -56,7 +56,7 @@ export function RoleBasedSidebar() {
     // Filter by account type if available
     if (profile.account_type_id) {
       filteredItems = filteredItems.filter(item => 
-        item.allowedAccountTypes.includes(profile.account_type_id)
+        item.allowedAccountTypes.includes(Number(profile.account_type_id))
       );
     } else {
       // If logged in but account_type_id not loaded, show only universal items

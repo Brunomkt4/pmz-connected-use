@@ -18,7 +18,7 @@ const RoleBasedRoute = ({
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
-      if (!profile || !allowedAccountTypes.includes(profile.account_type_id)) {
+      if (!profile || !allowedAccountTypes.includes(Number(profile.account_type_id))) {
         navigate(redirectTo);
       }
     }
@@ -32,7 +32,7 @@ const RoleBasedRoute = ({
     );
   }
 
-  if (!isAuthenticated || !profile || !allowedAccountTypes.includes(profile.account_type_id)) {
+  if (!isAuthenticated || !profile || !allowedAccountTypes.includes(Number(profile.account_type_id))) {
     return null;
   }
 
