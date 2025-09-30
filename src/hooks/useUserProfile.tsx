@@ -4,12 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface UserProfile {
   id: string;
-  user_id: string;
   account_type_id: number;
   full_name: string;
   email: string;
   phone?: string;
-  country?: string;
+  language?: string;
+  timezone?: string;
+  notifications_enabled?: boolean;
+  date_format?: string;
 }
 
 interface AccountType {
@@ -42,7 +44,7 @@ export const useUserProfile = () => {
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('id', user.id)
           .single();
 
         if (profileError) {
