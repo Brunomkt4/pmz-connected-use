@@ -17,9 +17,9 @@ import { Loader2, Save, User, Settings as SettingsIcon, Trash2, LogOut } from "l
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 const profileSchema = z.object({
-  full_name: z.string().min(2, "Full name must be at least 2 characters").optional().or(z.literal("")),
-  email: z.string().email("Invalid email address").optional().or(z.literal("")),
-  phone: z.string().min(10, "Phone number must be at least 10 digits").optional().or(z.literal("")),
+  full_name: z.string().trim().min(2, "Full name must be at least 2 characters").max(100, "Full name must be less than 100 characters").optional().or(z.literal("")),
+  email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters").optional().or(z.literal("")),
+  phone: z.string().trim().min(10, "Phone number must be at least 10 digits").max(20, "Phone number must be less than 20 digits").optional().or(z.literal("")),
 });
 
 const preferencesSchema = z.object({
