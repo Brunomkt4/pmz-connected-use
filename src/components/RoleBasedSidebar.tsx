@@ -29,10 +29,10 @@ const allMenuItems: MenuItem[] = [
   { id: "transactions", label: "Transaction Intel", url: "/transaction-intelligence", icon: TrendingUp, allowedAccountTypes: [1, 2, 3, 4, 5, 6] },
   { id: "supplier", label: "Supplier Registration", url: "/supplier-registration", icon: Building2, allowedAccountTypes: [1] }, // Only Sellers
   { id: "buyer", label: "Buyer Registration", url: "/buyer-registration", icon: ShoppingCart, allowedAccountTypes: [2] }, // Only Buyers
-  { id: "transport", label: "Transport Registration", url: "/transport-registration", icon: Ship, allowedAccountTypes: [4] }, // Only Carriers
+  { id: "transport", label: "Transport Registration", url: "/transport-registration", icon: Ship, allowedAccountTypes: [3] }, // Only Carriers
   { id: "guarantee", label: "Bank Guarantee", url: "/bank-guarantee-registration", icon: Shield, allowedAccountTypes: [5] }, // Only Bank Guarantee
   { id: "credit", label: "Letter of Credit", url: "/letter-of-credit-registration", icon: CreditCard, allowedAccountTypes: [6] }, // Only Financing
-  { id: "certification", label: "Certification", url: "/certification-registration", icon: Award, allowedAccountTypes: [3] }, // Only Insurance
+  { id: "certification", label: "Certification", url: "/certification-registration", icon: Award, allowedAccountTypes: [4] }, // Only Insurance
   { id: "settings", label: "Settings", url: "/settings", icon: Settings, allowedAccountTypes: [1, 2, 3, 4, 5, 6] },
 ];
 

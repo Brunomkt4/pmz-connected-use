@@ -27,19 +27,19 @@ const UserDashboard = () => {
         icon: ShoppingCart,
         color: 'text-green-600'
       },
-      3: { // Insurance Company
-        title: 'Certification Registration',
-        description: 'Register your insurance and certification services',
-        route: '/certification-registration', 
-        icon: Award,
-        color: 'text-purple-600'
-      },
-      4: { // Carrier
+      3: { // Carrier
         title: 'Transport Registration',
         description: 'Register your transportation and logistics services',
         route: '/transport-registration',
         icon: Ship,
         color: 'text-orange-600'
+      },
+      4: { // Insurance Company
+        title: 'Certification Registration',
+        description: 'Register your insurance and certification services',
+        route: '/certification-registration', 
+        icon: Award,
+        color: 'text-purple-600'
       },
       5: { // Bank Guarantee
         title: 'Bank Guarantee Registration',
