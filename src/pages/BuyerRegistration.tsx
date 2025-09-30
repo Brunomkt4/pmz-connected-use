@@ -75,6 +75,17 @@ export default function BuyerRegistration() {
       return;
     }
 
+    // Basic required fields validation
+    const missing: string[] = [];
+    if (!data.companyName?.trim()) missing.push('company name');
+    if (!data.email?.trim()) missing.push('email');
+    if (!data.phone?.trim()) missing.push('phone');
+    if (!data.address?.trim()) missing.push('address');
+    if (missing.length) {
+      toast.error(`Please provide: ${missing.join(', ')}`);
+      return;
+    }
+
     try {
       console.log('Saving buyer data', data);
       

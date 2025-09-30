@@ -77,6 +77,18 @@ export default function SupplierRegistration() {
       return;
     }
 
+    // Basic required fields validation
+    const missing: string[] = [];
+    if (!data.companyName?.trim()) missing.push('company name');
+    if (!data.email?.trim()) missing.push('email');
+    if (!data.phone?.trim()) missing.push('phone');
+    if (!data.address?.trim()) missing.push('address');
+    if (!data.cnpj?.trim()) missing.push('CNPJ');
+    if (missing.length) {
+      toast.error(`Please provide: ${missing.join(', ')}`);
+      return;
+    }
+
     try {
       console.log('Saving supplier data', data);
       
@@ -86,7 +98,7 @@ export default function SupplierRegistration() {
         email: data.email || '',
         phone: data.phone || '',
         address: data.address || '',
-        cnpj: data.cnpj || null,
+        cnpj: data.cnpj || '',
         account_type_id: 1, // Supplier account type
         user_id: user.id
       };

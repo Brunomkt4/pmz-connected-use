@@ -72,6 +72,15 @@ export default function TransportRegistration() {
       return;
     }
 
+    // Basic required fields validation
+    const missing: string[] = [];
+    if (!data.companyName?.trim()) missing.push('company name');
+    if (!data.email?.trim()) missing.push('email');
+    if (missing.length) {
+      toast.error(`Please provide: ${missing.join(', ')}`);
+      return;
+    }
+
     try {
       console.log('Saving carrier data', data);
       
