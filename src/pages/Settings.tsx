@@ -106,7 +106,7 @@ export default function Settings() {
         supabase
           .from("profiles")
           .select("*")
-          .eq("user_id", user?.id)
+          .eq("id", user?.id)
           .maybeSingle(),
         supabase
           .from("companies")
@@ -169,7 +169,7 @@ export default function Settings() {
           email: data.email || null,
           phone: data.phone || null,
         })
-        .eq("user_id", user?.id);
+        .eq("id", user?.id);
 
       if (error) throw error;
 
@@ -200,7 +200,7 @@ export default function Settings() {
           notifications_enabled: data.notifications_enabled,
           date_format: data.date_format,
         })
-        .eq("user_id", user?.id);
+        .eq("id", user?.id);
 
       if (error) throw error;
 
