@@ -17,8 +17,10 @@ const RoleBasedRoute = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && isAuthenticated) {
-      if (!profile || !allowedAccountTypes.includes(Number(profile.account_type_id))) {
+    if (!loading && isAuthenticated && profile) {
+      const userType = Number(profile.account_type_id);
+      console.debug('RoleBasedRoute check', { userType, allowedAccountTypes });
+      if (Number.isFinite(userType) && !allowedAccountTypes.includes(userType)) {
         navigate(redirectTo);
       }
     }
@@ -32,7 +34,20 @@ const RoleBasedRoute = ({
     );
   }
 
-  if (!isAuthenticated || !profile || !allowedAccountTypes.includes(Number(profile.account_type_id))) {
+  if (!isAuthenticated || !profile) {
+    return null;
+  }
+
+  const userType = Number(profile.account_type_id);
+  if (!Number.isFinite(userType)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading profile...</div>
+      </div>
+    );
+  }
+
+  if (!allowedAccountTypes.includes(userType)) {
     return null;
   }
 
