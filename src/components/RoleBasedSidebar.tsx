@@ -45,9 +45,9 @@ export function RoleBasedSidebar() {
 
   // Filter menu items based on account type and logged in status
   const getVisibleMenuItems = () => {
-    // If user is not logged in, show ONLY Home
+    // If user is not logged in, show NO icons
     if (!profile) {
-      return allMenuItems.filter(item => item.id === "home");
+      return [];
     }
     
     // User is logged in - remove home and filter by account type
