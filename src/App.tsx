@@ -53,10 +53,10 @@ const App = () => (
                     <Route path="/transaction-intelligence" element={<ProtectedRoute><TransactionIntelligence /></ProtectedRoute>} />
                     <Route path="/supplier-registration" element={<ProtectedRoute><RoleBasedRoute allowedAccountTypes={[1]}><SupplierRegistration /></RoleBasedRoute></ProtectedRoute>} />
                     <Route path="/buyer-registration" element={<ProtectedRoute><RoleBasedRoute allowedAccountTypes={[2]}><BuyerRegistration /></RoleBasedRoute></ProtectedRoute>} />
-                    <Route path="/transport-registration" element={<ProtectedRoute><RoleBasedRoute allowedAccountTypes={[4]}><TransportRegistration /></RoleBasedRoute></ProtectedRoute>} />
+                    <Route path="/transport-registration" element={<ProtectedRoute><RoleBasedRoute allowedAccountTypes={[3]}><TransportRegistration /></RoleBasedRoute></ProtectedRoute>} />
                     <Route path="/bank-guarantee-registration" element={<ProtectedRoute><RoleBasedRoute allowedAccountTypes={[5]}><BankGuaranteeRegistration /></RoleBasedRoute></ProtectedRoute>} />
                     <Route path="/letter-of-credit-registration" element={<ProtectedRoute><RoleBasedRoute allowedAccountTypes={[6]}><LetterOfCreditRegistration /></RoleBasedRoute></ProtectedRoute>} />
-                    <Route path="/certification-registration" element={<ProtectedRoute><RoleBasedRoute allowedAccountTypes={[3]}><CertificationRegistration /></RoleBasedRoute></ProtectedRoute>} />
+                    <Route path="/certification-registration" element={<ProtectedRoute><RoleBasedRoute allowedAccountTypes={[4]}><CertificationRegistration /></RoleBasedRoute></ProtectedRoute>} />
                     <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
                     <Route path="/favorites" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
                     <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
