@@ -45,10 +45,16 @@ export const useUserProfile = () => {
           .from('profiles')
           .select('*')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         if (profileError) {
           throw profileError;
+        }
+
+        if (!profileData) {
+          console.warn('No profile found for user:', user.id);
+          setLoading(false);
+          return;
         }
 
         setProfile(profileData);

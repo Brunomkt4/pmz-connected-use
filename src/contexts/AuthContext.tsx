@@ -60,7 +60,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           emailRedirectTo: redirectUrl,
           data: {
             full_name: fullName,
-            account_type_id: accountTypeId.toString(),
+            account_type_id: accountTypeId,
             company_name: companyName || null,
           }
         }

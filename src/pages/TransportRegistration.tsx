@@ -79,7 +79,7 @@ export default function TransportRegistration() {
       const { data: carrierType, error: typeErr } = await supabase
         .from('account_types')
         .select('id')
-        .eq('name', 'Carrier / Transportation Company')
+        .eq('name', 'Transport')
         .maybeSingle();
 
       if (typeErr) throw typeErr;

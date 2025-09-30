@@ -1,13 +1,57 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Building2, ShoppingCart, Ship, Shield, CreditCard, Award } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 const UserDashboard = () => {
   const { profile, accountType, loading } = useUserProfile();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const [hasRoleData, setHasRoleData] = useState<boolean | null>(null);
+
+  // Check if user has completed role-specific registration
+  useEffect(() => {
+    const checkRoleData = async () => {
+      if (!user || !profile?.account_type_id) return;
+
+      try {
+        let hasData = false;
+
+        if (profile.account_type_id === 1) {
+          const { data } = await supabase
+            .from('suppliers')
+            .select('id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          hasData = !!data;
+        } else if (profile.account_type_id === 2) {
+          const { data } = await supabase
+            .from('buyers')
+            .select('id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          hasData = !!data;
+        } else if (profile.account_type_id === 3) {
+          const { data } = await supabase
+            .from('carriers')
+            .select('id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          hasData = !!data;
+        }
+
+        setHasRoleData(hasData);
+      } catch (error) {
+        console.error('Error checking role data:', error);
+      }
+    };
+
+    checkRoleData();
+  }, [user, profile]);
 
   const getRegistrationInfo = () => {
     if (!profile) return null;
@@ -94,13 +138,13 @@ const UserDashboard = () => {
         </p>
       </div>
 
-      {registrationInfo && (
-        <Card className="max-w-2xl mx-auto">
+      {registrationInfo && hasRoleData === false && (
+        <Card className="max-w-2xl mx-auto border-orange-500 bg-orange-50 dark:bg-orange-950">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
               <registrationInfo.icon className={`h-12 w-12 ${registrationInfo.color}`} />
             </div>
-            <CardTitle className="text-2xl">{registrationInfo.title}</CardTitle>
+            <CardTitle className="text-2xl">Complete Your Profile</CardTitle>
             <CardDescription className="text-lg">
               {registrationInfo.description}
             </CardDescription>
@@ -112,11 +156,37 @@ const UserDashboard = () => {
                 size="lg"
                 className="w-full max-w-sm"
               >
-                Go to Registration
+                Complete Registration Now
               </Button>
             </div>
             <div className="text-sm text-muted-foreground text-center">
-              <p>Complete your registration to start using the platform's features.</p>
+              <p>You need to complete your registration to access all platform features.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {registrationInfo && hasRoleData === true && (
+        <Card className="max-w-2xl mx-auto">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <registrationInfo.icon className={`h-12 w-12 ${registrationInfo.color}`} />
+            </div>
+            <CardTitle className="text-2xl">{registrationInfo.title}</CardTitle>
+            <CardDescription className="text-lg">
+              Update your registration information
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center">
+              <Button 
+                onClick={() => navigate(registrationInfo.route)}
+                size="lg"
+                variant="outline"
+                className="w-full max-w-sm"
+              >
+                Edit Registration
+              </Button>
             </div>
           </CardContent>
         </Card>
