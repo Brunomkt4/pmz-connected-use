@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
 
 interface Message {
   id: string;
@@ -73,7 +72,7 @@ export default function SupplierRegistration() {
 
   const saveSupplierData = async (data: SupplierData) => {
     if (!user) {
-      toast.error('You must be logged in to save supplier data');
+      console.error('You must be logged in to save supplier data');
       return;
     }
 
@@ -85,7 +84,7 @@ export default function SupplierRegistration() {
     if (!data.address?.trim()) missing.push('address');
     if (!data.cnpj?.trim()) missing.push('CNPJ');
     if (missing.length) {
-      toast.error(`Please provide: ${missing.join(', ')}`);
+      console.error(`Please provide: ${missing.join(', ')}`);
       return;
     }
 
@@ -169,10 +168,9 @@ export default function SupplierRegistration() {
       }
 
       setIsRegistrationComplete(true);
-      toast.success('Supplier registration completed successfully!');
+      console.log('Supplier registration completed successfully!');
     } catch (error) {
       console.error('Error saving supplier data:', error);
-      toast.error('Failed to save supplier data. Please try again.');
     }
   };
 

@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
 
 interface Message {
   id: string;
@@ -68,7 +67,7 @@ export default function TransportRegistration() {
 
   const saveCarrierData = async (data: TransportData) => {
     if (!user) {
-      toast.error('You must be logged in to save carrier data');
+      console.error('You must be logged in to save carrier data');
       return;
     }
 
@@ -77,7 +76,7 @@ export default function TransportRegistration() {
     if (!data.companyName?.trim()) missing.push('company name');
     if (!data.email?.trim()) missing.push('email');
     if (missing.length) {
-      toast.error(`Please provide: ${missing.join(', ')}`);
+      console.error(`Please provide: ${missing.join(', ')}`);
       return;
     }
 
@@ -177,10 +176,9 @@ export default function TransportRegistration() {
       }
 
       setIsRegistrationComplete(true);
-      toast.success('Transport registration completed successfully!');
+      console.log('Transport registration completed successfully!');
     } catch (error) {
       console.error('Error saving carrier data:', error);
-      toast.error('Failed to save carrier data. Please try again.');
     }
   };
 

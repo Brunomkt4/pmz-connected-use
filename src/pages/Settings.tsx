@@ -10,7 +10,6 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2, Save, User, Settings as SettingsIcon, Trash2, LogOut } from "lucide-react";
@@ -68,7 +67,6 @@ const dateFormats = [
 
 export default function Settings() {
   const { user, deleteAccount, signOut } = useAuth();
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -116,11 +114,6 @@ export default function Settings() {
 
       if (profileResponse.error) {
         console.error("Error loading profile:", profileResponse.error);
-        toast({
-          title: "Error",
-          description: "Failed to load profile data",
-          variant: "destructive",
-        });
         return;
       }
 
@@ -149,11 +142,6 @@ export default function Settings() {
       setCompanies(companies);
     } catch (error) {
       console.error("Error loading profile:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load profile data",
-        variant: "destructive",
-      });
     } finally {
       setIsLoading(false);
     }
@@ -172,18 +160,8 @@ export default function Settings() {
         .eq("id", user?.id);
 
       if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      });
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update profile",
-        variant: "destructive",
-      });
     } finally {
       setIsSaving(false);
     }
@@ -203,18 +181,8 @@ export default function Settings() {
         .eq("id", user?.id);
 
       if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Preferences updated successfully",
-      });
     } catch (error) {
       console.error("Error updating preferences:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update preferences",
-        variant: "destructive",
-      });
     } finally {
       setIsSaving(false);
     }

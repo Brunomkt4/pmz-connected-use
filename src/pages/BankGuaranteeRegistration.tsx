@@ -8,7 +8,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
 
 interface Message {
   id: string;
@@ -62,7 +61,7 @@ export default function BankGuaranteeRegistration() {
 
   const saveGuaranteeData = async (data: BankGuaranteeData) => {
     if (!user) {
-      toast.error('You must be logged in to save bank guarantee data');
+      console.error('You must be logged in to save bank guarantee data');
       return;
     }
 
@@ -116,10 +115,9 @@ export default function BankGuaranteeRegistration() {
 
       setIsRegistrationComplete(true);
       setShowCompletionSheet(true);
-      toast.success('Bank guarantee registration completed successfully!');
+      console.log('Bank guarantee registration completed successfully!');
     } catch (error: any) {
       console.error('Error saving bank guarantee data:', error);
-      toast.error(`Failed to save bank guarantee data: ${error?.message || 'Please try again.'}`);
     }
   };
 

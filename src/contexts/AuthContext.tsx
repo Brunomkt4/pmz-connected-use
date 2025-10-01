@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
   user: User | null;
@@ -27,7 +26,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
 
   useEffect(() => {
     // Set up auth state listener
@@ -67,11 +65,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) {
-        toast({
-          title: "Sign Up Error",
-          description: error.message,
-          variant: "destructive",
-        });
+        console.error("Sign Up Error:", error.message);
       } else {
         // Send welcome email
         try {
@@ -90,22 +84,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           });
         } catch (emailError) {
           console.error("Error sending welcome email:", emailError);
-          // Don't show error to user for email failure
         }
-
-        toast({
-          title: "Success!",
-          description: "Please check your email to verify your account.",
-        });
       }
 
       return { error };
     } catch (error: any) {
-      toast({
-        title: "Sign Up Error", 
-        description: error.message,
-        variant: "destructive",
-      });
+      console.error("Sign Up Error:", error.message);
       return { error };
     }
   };
@@ -118,20 +102,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) {
-        toast({
-          title: "Sign In Error",
-          description: error.message,
-          variant: "destructive",
-        });
+        console.error("Sign In Error:", error.message);
       }
 
       return { error };
     } catch (error: any) {
-      toast({
-        title: "Sign In Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      console.error("Sign In Error:", error.message);
       return { error };
     }
   };
@@ -139,15 +115,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
-      toast({
-        title: "Signed out successfully",
-      });
     } catch (error: any) {
-      toast({
-        title: "Sign Out Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      console.error("Sign Out Error:", error.message);
     }
   };
 
@@ -163,26 +132,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) {
-        toast({
-          title: "Account Deletion Error",
-          description: error.message,
-          variant: "destructive",
-        });
+        console.error("Account Deletion Error:", error.message);
         return { error };
       }
 
-      toast({
-        title: "Account deleted successfully",
-        description: "Your account and all associated data have been permanently deleted.",
-      });
-
       return { error: null };
     } catch (error: any) {
-      toast({
-        title: "Account Deletion Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      console.error("Account Deletion Error:", error.message);
       return { error };
     }
   };

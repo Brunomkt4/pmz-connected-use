@@ -8,7 +8,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { useNavigate } from "react-router-dom";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
 
 interface Message {
   id: string;
@@ -71,7 +70,7 @@ export default function BuyerRegistration() {
 
   const saveBuyerData = async (data: BuyerData) => {
     if (!user) {
-      toast.error('You must be logged in to save buyer data');
+      console.error('You must be logged in to save buyer data');
       return;
     }
 
@@ -82,7 +81,7 @@ export default function BuyerRegistration() {
     if (!data.phone?.trim()) missing.push('phone');
     if (!data.address?.trim()) missing.push('address');
     if (missing.length) {
-      toast.error(`Please provide: ${missing.join(', ')}`);
+      console.error(`Please provide: ${missing.join(', ')}`);
       return;
     }
 
@@ -174,10 +173,9 @@ export default function BuyerRegistration() {
 
       setIsRegistrationComplete(true);
       setShowCompletionSheet(true);
-      toast.success('Buyer registration completed successfully!');
+      console.log('Buyer registration completed successfully!');
     } catch (error: any) {
       console.error('Error saving buyer data:', error);
-      toast.error(`Failed to save buyer data: ${error?.message || 'Please try again.'}`);
     }
   };
 

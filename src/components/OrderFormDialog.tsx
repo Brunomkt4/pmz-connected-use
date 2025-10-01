@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Product } from "@/components/ProductGrid";
 
@@ -31,7 +30,6 @@ interface OrderFormDialogProps {
 }
 
 export const OrderFormDialog = ({ product, isOpen, onClose }: OrderFormDialogProps) => {
-  const { toast } = useToast();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -49,11 +47,7 @@ export const OrderFormDialog = ({ product, isOpen, onClose }: OrderFormDialogPro
 
   const onSubmit = async (values: OrderFormValues) => {
     if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to place an order.",
-        variant: "destructive",
-      });
+      console.log("Authentication required");
       return;
     }
 
@@ -70,19 +64,10 @@ export const OrderFormDialog = ({ product, isOpen, onClose }: OrderFormDialogPro
         fileName: values.file[0]?.name,
       });
       
-      toast({
-        title: "Order Sent Successfully!",
-        description: `Your order for ${product?.name} has been submitted.`,
-      });
-      
       form.reset();
       onClose();
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to send order. Please try again.",
-        variant: "destructive",
-      });
+      console.error("Failed to send order:", error);
     } finally {
       setIsSubmitting(false);
     }
