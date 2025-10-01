@@ -38,7 +38,7 @@ const Index = () => {
               Connect with certified meat suppliers worldwide. Use AI-powered search to find premium protein products.
             </p>
             <Link to="/auth">
-              <Button size="lg" className="bg-brand-red hover:bg-brand-red/90 text-primary-foreground text-lg px-8 py-6">
+              <Button size="lg" className="bg-brand-navy hover:bg-brand-navy/90 text-primary-foreground text-lg px-8 py-6">
                 Get Started - Sign In
               </Button>
             </Link>
