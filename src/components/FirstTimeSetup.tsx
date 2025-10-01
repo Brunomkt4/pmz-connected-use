@@ -2,13 +2,11 @@ import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 
 export const FirstTimeSetup = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { toast } = useToast();
 
   useEffect(() => {
     const checkSetupStatus = async () => {
@@ -73,12 +71,8 @@ export const FirstTimeSetup = () => {
               return;
           }
 
-          // Only show toast and redirect if not already on the registration page
+          // Only redirect if not already on the registration page
           if (location.pathname !== targetRoute) {
-            toast({
-              title: "Complete Your Profile",
-              description: "Please complete your registration to continue.",
-            });
             navigate(targetRoute);
           }
         }
@@ -88,7 +82,7 @@ export const FirstTimeSetup = () => {
     };
 
     checkSetupStatus();
-  }, [user, navigate, toast, location]);
+  }, [user, navigate, location]);
 
   return null;
 };
