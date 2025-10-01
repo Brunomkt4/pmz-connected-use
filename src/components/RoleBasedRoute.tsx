@@ -16,15 +16,7 @@ const RoleBasedRoute = ({
   const { profile, loading, isAuthenticated } = useUserProfile();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!loading && isAuthenticated && profile) {
-      const userType = Number(profile.account_type_id);
-      console.debug('RoleBasedRoute check', { userType, allowedAccountTypes });
-      if (Number.isFinite(userType) && !allowedAccountTypes.includes(userType)) {
-        navigate(redirectTo);
-      }
-    }
-  }, [profile, loading, isAuthenticated, allowedAccountTypes, navigate, redirectTo]);
+  // Removed automatic redirect to prevent infinite loops
 
   if (loading) {
     return (
@@ -48,7 +40,11 @@ const RoleBasedRoute = ({
   }
 
   if (!allowedAccountTypes.includes(userType)) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Access denied. Please check your account type.</div>
+      </div>
+    );
   }
 
   return <>{children}</>;

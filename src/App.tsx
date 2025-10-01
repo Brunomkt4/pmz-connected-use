@@ -20,7 +20,7 @@ import LetterOfCreditRegistration from "./pages/LetterOfCreditRegistration";
 import CertificationRegistration from "./pages/CertificationRegistration";
 import NotFound from "./pages/NotFound";
 import Marketplace from "./pages/Marketplace";
-import { FirstTimeSetup } from "@/components/FirstTimeSetup";
+
 
 const queryClient = new QueryClient();
 
@@ -41,7 +41,6 @@ const App = () => (
               <RoleBasedSidebar />
               <main className="flex-1 overflow-hidden flex flex-col">
                 <div className="flex-1 overflow-auto">
-                  <FirstTimeSetup />
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
