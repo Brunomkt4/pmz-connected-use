@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 export const FirstTimeSetup = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -56,23 +57,29 @@ export const FirstTimeSetup = () => {
 
         // If no role data exists, redirect to appropriate registration page
         if (!hasRoleData) {
-          toast({
-            title: "Complete Your Profile",
-            description: "Please complete your registration to continue.",
-          });
-
+          let targetRoute = '';
+          
           switch (accountTypeId) {
             case 1:
-              navigate('/buyer-registration');
+              targetRoute = '/buyer-registration';
               break;
             case 2:
-              navigate('/supplier-registration');
+              targetRoute = '/supplier-registration';
               break;
             case 3:
-              navigate('/transport-registration');
+              targetRoute = '/transport-registration';
               break;
             default:
-              break;
+              return;
+          }
+
+          // Only show toast and redirect if not already on the registration page
+          if (location.pathname !== targetRoute) {
+            toast({
+              title: "Complete Your Profile",
+              description: "Please complete your registration to continue.",
+            });
+            navigate(targetRoute);
           }
         }
       } catch (error) {
@@ -81,7 +88,7 @@ export const FirstTimeSetup = () => {
     };
 
     checkSetupStatus();
-  }, [user, navigate, toast]);
+  }, [user, navigate, toast, location]);
 
   return null;
 };
