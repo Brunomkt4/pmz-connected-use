@@ -4,7 +4,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Building2, ShoppingCart, Ship, Shield, CreditCard, Award } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { mockSuppliers, mockBuyers, mockCarriers } from '@/services/mockData';
 import { useAuth } from '@/contexts/AuthContext';
 
 const UserDashboard = () => {
@@ -22,25 +22,13 @@ const UserDashboard = () => {
         let hasData = false;
 
         if (profile.account_type_id === 1) {
-          const { data } = await supabase
-            .from('suppliers')
-            .select('id')
-            .eq('user_id', user.id)
-            .maybeSingle();
+          const data = mockSuppliers.get(user.id);
           hasData = !!data;
         } else if (profile.account_type_id === 2) {
-          const { data } = await supabase
-            .from('buyers')
-            .select('id')
-            .eq('user_id', user.id)
-            .maybeSingle();
+          const data = mockBuyers.get(user.id);
           hasData = !!data;
         } else if (profile.account_type_id === 3) {
-          const { data } = await supabase
-            .from('carriers')
-            .select('id')
-            .eq('user_id', user.id)
-            .maybeSingle();
+          const data = mockCarriers.get(user.id);
           hasData = !!data;
         }
 

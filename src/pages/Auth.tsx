@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabase } from '@/integrations/supabase/client';
+import { accountTypes } from '@/services/mockData';
 
 interface AccountType {
   id: number;
@@ -21,7 +21,6 @@ const Auth = () => {
   const [fullName, setFullName] = useState('');
   const [accountTypeId, setAccountTypeId] = useState<number | null>(null);
   const [companyName, setCompanyName] = useState('');
-  const [accountTypes, setAccountTypes] = useState<AccountType[]>([]);
   const [loading, setLoading] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
@@ -32,22 +31,6 @@ const Auth = () => {
       navigate('/dashboard');
     }
   }, [user, navigate]);
-
-  // Fetch account types
-  useEffect(() => {
-    const fetchAccountTypes = async () => {
-      const { data, error } = await supabase
-        .from('account_types')
-        .select('*')
-        .order('id');
-      
-      if (data && !error) {
-        setAccountTypes(data);
-      }
-    };
-    
-    fetchAccountTypes();
-  }, []);
 
   // Check if current account type requires company
   const requiresCompany = accountTypeId ? [1, 2, 3, 4, 5, 6].includes(accountTypeId) : false;

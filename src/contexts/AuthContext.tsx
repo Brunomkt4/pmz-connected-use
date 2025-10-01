@@ -1,10 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { mockAuth, MockUser, MockSession } from '@/services/mockAuth';
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: MockUser | null;
+  session: MockSession | null;
   loading: boolean;
   signUp: (email: string, password: string, fullName: string, accountTypeId: number, companyName?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
@@ -23,13 +22,13 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<MockUser | null>(null);
+  const [session, setSession] = useState<MockSession | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const subscription = mockAuth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
@@ -38,53 +37,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    const currentSession = mockAuth.getSession();
+    setSession(currentSession);
+    setUser(currentSession?.user ?? null);
+    setLoading(false);
 
     return () => subscription.unsubscribe();
   }, []);
 
   const signUp = async (email: string, password: string, fullName: string, accountTypeId: number, companyName?: string) => {
     try {
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            full_name: fullName,
-            account_type_id: accountTypeId,
-            company_name: companyName || null,
-          }
-        }
-      });
+      const { error } = await mockAuth.signUp(email, password, fullName, accountTypeId, companyName);
 
       if (error) {
         console.error("Sign Up Error:", error.message);
-      } else {
-        // Send welcome email
-        try {
-          const { data: accountTypes } = await supabase
-            .from("account_types")
-            .select("name")
-            .eq("id", accountTypeId)
-            .single();
-
-          await supabase.functions.invoke('send-welcome-email', {
-            body: {
-              email,
-              name: fullName,
-              accountType: accountTypes?.name || 'User'
-            }
-          });
-        } catch (emailError) {
-          console.error("Error sending welcome email:", emailError);
-        }
       }
 
       return { error };
@@ -96,10 +62,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { error } = await mockAuth.signIn(email, password);
 
       if (error) {
         console.error("Sign In Error:", error.message);
@@ -114,7 +77,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
+      await mockAuth.signOut();
     } catch (error: any) {
       console.error("Sign Out Error:", error.message);
     }
@@ -126,16 +89,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return { error: { message: "No user logged in" } };
       }
 
-      // Call edge function to delete user account and all associated data
-      const { error } = await supabase.functions.invoke('delete-user-account', {
-        body: { userId: user.id }
-      });
+      const { error } = await mockAuth.deleteAccount(user.id);
 
       if (error) {
         console.error("Account Deletion Error:", error.message);
         return { error };
       }
 
+      await signOut();
       return { error: null };
     } catch (error: any) {
       console.error("Account Deletion Error:", error.message);

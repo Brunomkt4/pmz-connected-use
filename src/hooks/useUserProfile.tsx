@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { mockProfiles, accountTypes } from '@/services/mockData';
 
 interface UserProfile {
   id: string;
@@ -40,16 +40,8 @@ export const useUserProfile = () => {
         setLoading(true);
         setError(null);
 
-        // Fetch user profile
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .maybeSingle();
-
-        if (profileError) {
-          throw profileError;
-        }
+        // Fetch user profile from mock data
+        const profileData = mockProfiles.get(user.id);
 
         if (!profileData) {
           console.warn('No profile found for user:', user.id);
@@ -61,17 +53,13 @@ export const useUserProfile = () => {
 
         // Fetch account type details
         if (profileData?.account_type_id) {
-          const { data: accountTypeData, error: accountTypeError } = await supabase
-            .from('account_types')
-            .select('*')
-            .eq('id', profileData.account_type_id)
-            .single();
+          const accountTypeData = accountTypes.find(
+            at => at.id === profileData.account_type_id
+          );
 
-          if (accountTypeError) {
-            throw accountTypeError;
+          if (accountTypeData) {
+            setAccountType(accountTypeData);
           }
-
-          setAccountType(accountTypeData);
         }
       } catch (err: any) {
         console.error('Error fetching user profile:', err);

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { supabase } from '@/integrations/supabase/client';
+import { mockSuppliers, mockCompanies } from '@/services/mockData';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Message {
@@ -91,41 +91,18 @@ export default function SupplierRegistration() {
     try {
       console.log('Saving supplier data', data);
       
-      // First, ensure company exists or update it
-      const companyData = {
+      // Save company data using mock service
+      mockCompanies.upsert(user.id, {
         name: data.companyName || '',
         email: data.email || '',
         phone: data.phone || '',
         address: data.address || '',
         cnpj: data.cnpj || '',
-        account_type_id: 1, // Supplier account type
-        user_id: user.id
-      };
+        account_type_id: 1,
+      });
 
-      // Check for existing company
-      const { data: existingCompany, error: companyExistsErr } = await supabase
-        .from('companies')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (companyExistsErr) throw companyExistsErr;
-
-      if (existingCompany?.id) {
-        const { error } = await supabase
-          .from('companies')
-          .update(companyData)
-          .eq('id', existingCompany.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('companies')
-          .insert(companyData);
-        if (error) throw error;
-      }
-
-      // Now save supplier-specific information to suppliers table
-      const supplierData = {
+      // Save supplier-specific information using mock service
+      mockSuppliers.upsert(user.id, {
         name: data.companyName || '',
         email: data.email || '',
         phone: data.phone || '',
@@ -140,32 +117,7 @@ export default function SupplierRegistration() {
         export_experience: data.experience || null,
         minimum_order_quantity: data.minimumOrderQuantity || null,
         lead_time: data.deliveryTime || null,
-        user_id: user.id
-      };
-
-      // Check for existing supplier
-      const { data: existingSupplier, error: existsErr } = await supabase
-        .from('suppliers')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (existsErr) throw existsErr;
-
-      if (existingSupplier?.id) {
-        const { error } = await supabase
-          .from('suppliers')
-          .update(supplierData)
-          .eq('id', existingSupplier.id);
-        if (error) throw error;
-        console.log('Supplier data updated successfully');
-      } else {
-        const { error } = await supabase
-          .from('suppliers')
-          .insert(supplierData);
-        if (error) throw error;
-        console.log('Supplier data inserted successfully');
-      }
+      });
 
       setIsRegistrationComplete(true);
       console.log('Supplier registration completed successfully!');

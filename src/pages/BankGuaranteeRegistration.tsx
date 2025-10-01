@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { mockBankGuarantees } from "@/services/mockData";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface Message {
@@ -68,50 +68,16 @@ export default function BankGuaranteeRegistration() {
     try {
       console.log('Saving bank guarantee data', data);
 
-      // Guard date parsing to avoid invalid date errors
-      const parsedDate = data.expiryDate ? new Date(data.expiryDate) : null;
-      const isoDate = parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate.toISOString().split('T')[0] : null;
-
-      const guaranteeData = {
-        applicant: data.applicant,
-        beneficiary: data.beneficiary,
-        guarantor_bank: data.guarantorBank,
+      mockBankGuarantees.upsert(user.id, {
+        applicant: data.applicant || '',
+        beneficiary: data.beneficiary || '',
+        guarantor_bank: data.guarantorBank || '',
         underlying_transaction_reference: data.underlyingTransactionReference,
-        guarantee_amount: data.guaranteeAmount,
-        currency: data.currency,
-        expiry_date: isoDate,
+        guarantee_amount: data.guaranteeAmount || '',
+        currency: data.currency || '',
+        expiry_date: data.expiryDate || '',
         terms_for_drawing: data.termsForDrawing,
-        form_of_presentation: data.formOfPresentation,
-        charges: data.charges,
-        advising_bank: data.advisingBank,
-        governing_rules: data.governingRules,
-        additional_conditions: data.additionalConditions,
-        user_id: user.id
-      };
-
-      // Check for existing guarantee and handle upsert manually
-      const { data: existingGuarantee, error: existsErr } = await supabase
-        .from('bank_guarantees')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      if (existsErr) throw existsErr;
-
-      let guaranteeError = null as unknown as { message?: string } | null;
-      if (existingGuarantee?.id) {
-        const { error } = await supabase
-          .from('bank_guarantees')
-          .update(guaranteeData)
-          .eq('id', existingGuarantee.id);
-        guaranteeError = error;
-      } else {
-        const { error } = await supabase
-          .from('bank_guarantees')
-          .insert(guaranteeData);
-        guaranteeError = error;
-      }
-
-      if (guaranteeError) throw guaranteeError;
+      });
 
       setIsRegistrationComplete(true);
       setShowCompletionSheet(true);

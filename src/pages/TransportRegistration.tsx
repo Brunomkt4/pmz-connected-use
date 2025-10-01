@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { supabase } from '@/integrations/supabase/client';
+import { mockCarriers, mockCompanies } from '@/services/mockData';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Message {
@@ -83,50 +83,17 @@ export default function TransportRegistration() {
     try {
       console.log('Saving carrier data', data);
       
-      // Resolve correct account_type_id for Carrier
-      const { data: carrierType, error: typeErr } = await supabase
-        .from('account_types')
-        .select('id')
-        .eq('name', 'Transport')
-        .maybeSingle();
-
-      if (typeErr) throw typeErr;
-      const carrierTypeId = carrierType?.id ?? 3;
-
-      // First, ensure company exists or update it
-      const companyData = {
+      // Save company data using mock service
+      mockCompanies.upsert(user.id, {
         name: data.companyName || '',
         email: data.email || '',
         phone: data.phone || '',
         address: data.address || '',
-        account_type_id: carrierTypeId,
-        user_id: user.id
-      };
+        account_type_id: 3,
+      });
 
-      // Check for existing company
-      const { data: existingCompany, error: companyExistsErr } = await supabase
-        .from('companies')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (companyExistsErr) throw companyExistsErr;
-
-      if (existingCompany?.id) {
-        const { error } = await supabase
-          .from('companies')
-          .update(companyData)
-          .eq('id', existingCompany.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('companies')
-          .insert(companyData);
-        if (error) throw error;
-      }
-
-      // Now save carrier-specific information to carriers table
-      const carrierData = {
+      // Save carrier-specific information using mock service
+      mockCarriers.upsert(user.id, {
         company_name: data.companyName || '',
         license_number: data.licenseNumber || null,
         phone: data.phone || null,
@@ -148,32 +115,7 @@ export default function TransportRegistration() {
         documents_compliance: data.documentsCompliance || [],
         tracking_support_details: data.trackingSupportDetails || null,
         special_requirements: data.specialRequirements || null,
-        user_id: user.id
-      };
-
-      // Check for existing carrier
-      const { data: existingCarrier, error: existsErr } = await supabase
-        .from('carriers')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (existsErr) throw existsErr;
-
-      if (existingCarrier?.id) {
-        const { error } = await supabase
-          .from('carriers')
-          .update(carrierData)
-          .eq('id', existingCarrier.id);
-        if (error) throw error;
-        console.log('Carrier data updated successfully');
-      } else {
-        const { error } = await supabase
-          .from('carriers')
-          .insert(carrierData);
-        if (error) throw error;
-        console.log('Carrier data inserted successfully');
-      }
+      });
 
       setIsRegistrationComplete(true);
       console.log('Transport registration completed successfully!');

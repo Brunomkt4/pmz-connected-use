@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { supabase } from "@/integrations/supabase/client";
+import { mockProfiles, mockCompanies } from "@/services/mockData";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2, Save, User, Settings as SettingsIcon, Trash2, LogOut } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -99,30 +99,11 @@ export default function Settings() {
 
   const loadUserProfile = async () => {
     try {
-      // Load both profile and companies data
-      const [profileResponse, companiesResponse] = await Promise.all([
-        supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user?.id)
-          .maybeSingle(),
-        supabase
-          .from("companies")
-          .select("*")
-          .order("name")
-      ]);
+      if (!user) return;
 
-      if (profileResponse.error) {
-        console.error("Error loading profile:", profileResponse.error);
-        return;
-      }
-
-      if (companiesResponse.error) {
-        console.error("Error loading companies:", companiesResponse.error);
-      }
-
-      const profile = profileResponse.data;
-      const companies = companiesResponse.data || [];
+      // Load profile from mock data
+      const profile = mockProfiles.get(user.id);
+      const company = mockCompanies.get(user.id);
 
       if (profile) {
         profileForm.reset({
@@ -139,7 +120,9 @@ export default function Settings() {
         });
       }
 
-      setCompanies(companies);
+      if (company) {
+        setCompanies([company]);
+      }
     } catch (error) {
       console.error("Error loading profile:", error);
     } finally {
@@ -150,16 +133,13 @@ export default function Settings() {
   const onProfileSubmit = async (data: ProfileFormData) => {
     setIsSaving(true);
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          full_name: data.full_name || null,
-          email: data.email || null,
-          phone: data.phone || null,
-        })
-        .eq("id", user?.id);
+      if (!user) return;
 
-      if (error) throw error;
+      mockProfiles.update(user.id, {
+        full_name: data.full_name || null,
+        email: data.email || null,
+        phone: data.phone || null,
+      });
     } catch (error) {
       console.error("Error updating profile:", error);
     } finally {
@@ -170,17 +150,14 @@ export default function Settings() {
   const onPreferencesSubmit = async (data: PreferencesFormData) => {
     setIsSaving(true);
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          language: data.language,
-          timezone: data.timezone,
-          notifications_enabled: data.notifications_enabled,
-          date_format: data.date_format,
-        })
-        .eq("id", user?.id);
+      if (!user) return;
 
-      if (error) throw error;
+      mockProfiles.update(user.id, {
+        language: data.language,
+        timezone: data.timezone,
+        notifications_enabled: data.notifications_enabled,
+        date_format: data.date_format,
+      });
     } catch (error) {
       console.error("Error updating preferences:", error);
     } finally {

@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useNavigate } from "react-router-dom";
-import { supabase } from '@/integrations/supabase/client';
+import { mockBuyers, mockCompanies } from '@/services/mockData';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Message {
@@ -88,43 +88,17 @@ export default function BuyerRegistration() {
     try {
       console.log('Saving buyer data', data);
       
-      // First, ensure company exists or update it
-      const companyData = {
+      // Save company data using mock service
+      mockCompanies.upsert(user.id, {
         name: data.companyName || '',
         email: data.email || '',
         phone: data.phone || '',
         address: data.address || '',
-        account_type_id: 2, // Buyer account type
-        user_id: user.id
-      };
+        account_type_id: 2,
+      });
 
-      // Check for existing company
-      const { data: existingCompany, error: companyExistsErr } = await supabase
-        .from('companies')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (companyExistsErr) throw companyExistsErr;
-
-      if (existingCompany?.id) {
-        const { error } = await supabase
-          .from('companies')
-          .update(companyData)
-          .eq('id', existingCompany.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('companies')
-          .insert(companyData);
-        if (error) throw error;
-      }
-
-      // Now save buyer-specific information to buyers table
-      const parsedDate = data.requiredDeliveryDate ? new Date(data.requiredDeliveryDate) : null;
-      const isoDate = parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate.toISOString().split('T')[0] : null;
-
-      const buyerData = {
+      // Save buyer-specific information using mock service
+      mockBuyers.upsert(user.id, {
         name: data.companyName || '',
         email: data.email || '',
         phone: data.phone || '',
@@ -134,42 +108,10 @@ export default function BuyerRegistration() {
         product_requirements: data.productRequirements || [],
         quantity_required: data.quantityRequired || null,
         target_price: data.targetPrice || null,
-        delivery_destination: data.deliveryDestination || null,
-        delivery_conditions: data.deliveryConditions || null,
-        required_delivery_date: isoDate,
-        preferred_payment_method: data.preferredPaymentMethod || null,
-        financing_needs: data.financingNeeds || null,
+        delivery_terms: data.deliveryConditions || null,
+        payment_terms: data.preferredPaymentMethod || null,
         certification_requirements: data.certificationRequirements || [],
-        insurance_requirements: data.insuranceRequirements || null,
-        bank_guarantee_details: data.bankGuaranteeDetails || null,
-        letter_of_credit_details: data.letterOfCreditDetails || null,
-        additional_comments: data.additionalComments || null,
-        user_id: user.id
-      };
-      
-      // Check for existing buyer
-      const { data: existingBuyer, error: existsErr } = await supabase
-        .from('buyers')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (existsErr) throw existsErr;
-
-      if (existingBuyer?.id) {
-        const { error } = await supabase
-          .from('buyers')
-          .update(buyerData)
-          .eq('id', existingBuyer.id);
-        if (error) throw error;
-        console.log('Buyer data updated successfully');
-      } else {
-        const { error } = await supabase
-          .from('buyers')
-          .insert(buyerData);
-        if (error) throw error;
-        console.log('Buyer data inserted successfully');
-      }
+      });
 
       setIsRegistrationComplete(true);
       setShowCompletionSheet(true);
