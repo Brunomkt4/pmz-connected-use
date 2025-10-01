@@ -34,7 +34,7 @@ import Settings from "@/pages/Settings";
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
+      <TooltipProvider delayDuration={100}>
         <BrowserRouter>
           <SidebarProvider defaultOpen={false}>
             <div className="flex min-h-screen w-full bg-background">
